@@ -99,7 +99,7 @@ public class Api {
         final UserController uc = new UserController(this.database);
         path("/user", () -> {
             post("",        uc::store);
-            get("/login",   uc::login);
+            post("/login",  uc::login);
             put("",         uc::update);
             delete("",      uc::remove);
         });

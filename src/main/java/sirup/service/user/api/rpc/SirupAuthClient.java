@@ -24,10 +24,7 @@ public class SirupAuthClient {
             }
         }));
     }
-
-    private String token = "";
-
-    public boolean auth() {
+    public boolean auth(String token) {
         AuthRequest req = AuthRequest.newBuilder().setToken(token).build();
         AuthResponse res;
         try {
@@ -39,7 +36,7 @@ public class SirupAuthClient {
         return res.getTokenValid();
     }
 
-    public Optional<String> token() {
+    public Optional<String> token(String username, String password) {
         TokenRequest req = TokenRequest.newBuilder().setCredentials(CredentialsRpc.newBuilder().setPassword("pass").setUsername("uname")).build();
         TokenResponse res;
         try {
@@ -48,8 +45,7 @@ public class SirupAuthClient {
             sre.printStackTrace();
             return Optional.empty();
         }
-        token = res.getToken();
-        return Optional.of(token);
+        return Optional.of(res.getToken());
     }
 
 }
