@@ -11,11 +11,11 @@ import java.util.concurrent.TimeUnit;
 public class SirupAuthClient {
 
     private final ManagedChannel managedChannel;
-    private final SirupAuthGrpc.SirupAuthBlockingStub blockingStub;
+    private final SirupAuthGrpc.SirupAuthBlockingStub authService;
 
     public SirupAuthClient() {
         managedChannel = ManagedChannelBuilder.forAddress("localhost",50051).usePlaintext().build();
-        blockingStub = SirupAuthGrpc.newBlockingStub(managedChannel);
+        authService = SirupAuthGrpc.newBlockingStub(managedChannel);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 managedChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
@@ -28,7 +28,7 @@ public class SirupAuthClient {
         AuthRequest req = AuthRequest.newBuilder().setToken(token).build();
         AuthResponse res;
         try {
-            res = blockingStub.auth(req);
+            res = authService.auth(req);
         } catch (StatusRuntimeException sre) {
             sre.printStackTrace();
             return false;
@@ -37,10 +37,10 @@ public class SirupAuthClient {
     }
 
     public Optional<String> token(String username, String password) {
-        TokenRequest req = TokenRequest.newBuilder().setCredentials(CredentialsRpc.newBuilder().setPassword("pass").setUsername("uname")).build();
+        TokenRequest req = TokenRequest.newBuilder().setCredentials(CredentialsRpc.newBuilder().setUsername(username).setPassword(password)).build();
         TokenResponse res;
         try {
-            res = blockingStub.token(req);
+            res = authService.token(req);
         } catch (StatusRuntimeException sre) {
             sre.printStackTrace();
             return Optional.empty();
