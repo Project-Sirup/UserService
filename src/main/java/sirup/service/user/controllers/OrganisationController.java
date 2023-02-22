@@ -6,12 +6,14 @@ import sirup.service.user.util.PlaceHolderResponse;
 import spark.Request;
 import spark.Response;
 
+import java.sql.Connection;
+
 public class OrganisationController extends AbstractController {
 
     private final Gson gson;
 
-    public OrganisationController(IDatabase database) {
-        super(database);
+    public OrganisationController(Connection connection) {
+        super(connection);
         this.gson = new Gson();
     }
 

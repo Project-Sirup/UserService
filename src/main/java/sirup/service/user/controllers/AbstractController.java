@@ -2,10 +2,12 @@ package sirup.service.user.controllers;
 
 import sirup.service.user.database.IDatabase;
 
-public abstract class AbstractController {
-    protected final IDatabase database;
+import java.sql.Connection;
 
-    public AbstractController(final IDatabase database) {
-        this.database = database;
+public abstract class AbstractController {
+    protected final Connection connection;
+
+    public AbstractController(final Connection connection) {
+        this.connection = connection;
     }
 }

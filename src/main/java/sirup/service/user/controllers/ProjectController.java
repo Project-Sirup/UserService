@@ -6,12 +6,14 @@ import sirup.service.user.util.PlaceHolderResponse;
 import spark.Request;
 import spark.Response;
 
+import java.sql.Connection;
+
 public class ProjectController extends AbstractController {
 
     private final Gson gson;
 
-    public ProjectController(IDatabase database) {
-        super(database);
+    public ProjectController(Connection connection) {
+        super(connection);
         this.gson = new Gson();
     }
 

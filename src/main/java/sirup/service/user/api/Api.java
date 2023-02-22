@@ -54,6 +54,11 @@ public class Api {
     }
 
     public void start() {
+
+        if (!this.database.connect()) {
+            return;
+        }
+
         after((Filter) (request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
@@ -78,7 +83,7 @@ public class Api {
     }
 
     public void organisationRoutes() {
-        final OrganisationController oc = new OrganisationController(this.database);
+        final OrganisationController oc = new OrganisationController(this.database.getConnection());
         path("/organisation", () -> {
             post("",   oc::store);
             put("",    oc::update);
@@ -87,7 +92,7 @@ public class Api {
     }
 
     public void projectRoutes() {
-        final ProjectController pc = new ProjectController(this.database);
+        final ProjectController pc = new ProjectController(this.database.getConnection());
         path("/project", () -> {
             post("",    pc::store);
             put("",     pc::update);
@@ -96,7 +101,7 @@ public class Api {
     }
 
     public void userRoutes() {
-        final UserController uc = new UserController(this.database);
+        final UserController uc = new UserController(this.database.getConnection());
         path("/user", () -> {
             post("",        uc::store);
             get("/login",   uc::login);
