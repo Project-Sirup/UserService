@@ -2,9 +2,13 @@ package sirup.service.user.dto;
 
 import java.util.*;
 
-public record Organisation(UUID id, Set<Project> projects, Map<User, PrivilegeLevel> users) {
-    public Organisation() {
-        this(UUID.randomUUID(), new HashSet<>(), new HashMap<>());
+public record Organisation(UUID organisationID, String name, Set<Project> projects, Map<User, PrivilegeLevel> users) {
+    public Organisation(String name) {
+        this(UUID.randomUUID(), name, new HashSet<>(), new HashMap<>());
+    }
+
+    public Organisation(UUID organisationID, String name) {
+        this(organisationID, name, new HashSet<>(), new HashMap<>());
     }
 
     @Override
@@ -15,7 +19,7 @@ public record Organisation(UUID id, Set<Project> projects, Map<User, PrivilegeLe
         if (obj == null || this.getClass() != obj.getClass()) {
             return false;
         }
-        Organisation p = (Organisation) obj;
-        return this.id().equals(p.id());
+        Organisation o = (Organisation) obj;
+        return this.organisationID().equals(o.organisationID());
     }
 }

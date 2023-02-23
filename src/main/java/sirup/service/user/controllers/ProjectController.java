@@ -1,7 +1,6 @@
 package sirup.service.user.controllers;
 
 import com.google.gson.Gson;
-import sirup.service.user.database.IDatabase;
 import sirup.service.user.util.PlaceHolderResponse;
 import spark.Request;
 import spark.Response;

@@ -2,9 +2,9 @@ package sirup.service.user.dto;
 
 import java.util.*;
 
-public record Project(UUID id, String name, Map<User, PrivilegeLevel> assignedUsers) {
+public record Project(UUID projectID, String name, Set<Service> services, Map<User, PrivilegeLevel> assignedUsers) {
     public Project(String name) {
-        this(UUID.randomUUID(),name,new HashMap<>());
+        this(UUID.randomUUID(),name,new HashSet<>(),new HashMap<>());
     }
 
     @Override
@@ -16,6 +16,6 @@ public record Project(UUID id, String name, Map<User, PrivilegeLevel> assignedUs
             return false;
         }
         Project p = (Project) obj;
-        return this.id().equals(p.id());
+        return this.projectID().equals(p.projectID());
     }
 }

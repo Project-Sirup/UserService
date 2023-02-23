@@ -34,7 +34,7 @@
         <dependency>
             <groupId>sirup.service.auth.rpc.proto</groupId>
             <artifactId>auth-rpc</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.2</version>
         </dependency>
 
         <!-- gRPC -->
@@ -88,6 +88,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit</groupId>
+            <artifactId>junit4-runner</artifactId>
+            <version>5.0.0-ALPHA</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

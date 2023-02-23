@@ -3,6 +3,7 @@ package sirup.service.user.database;
 import sirup.service.user.dto.User;
 
 import java.sql.*;
+import java.util.UUID;
 
 public class PostgreSQL implements IDatabase {
 
@@ -21,10 +22,14 @@ public class PostgreSQL implements IDatabase {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
             while (resultSet.next()) {
-                System.out.println(new User(resultSet.getString("userName"), resultSet.getString("password")));
+                System.out.println(
+                        new User(
+                                UUID.fromString(resultSet.getString("userID")),
+                                resultSet.getString("userName"),
+                                resultSet.getString("password")));
             }
-        } catch (SQLException se) {
-            System.err.println(se.getMessage());
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
             return false;
         }
         return true;
