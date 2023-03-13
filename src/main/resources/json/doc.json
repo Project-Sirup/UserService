@@ -1,0 +1,99 @@
+{
+  "UserService": {
+    "description": "This service is part of project-sirup, see github.com/Project-Sirup",
+    "author": "github.com/Wafl97",
+    "base_url": "/api/v1/",
+    "endpoints": {
+      "/user": {
+        "/login": {
+          "description": "Checks the given user credentials and returns the user with all the organisations, projects and services that this user is assigned to",
+          "method": "POST",
+          "request_body": {
+            "userName": "string",
+            "password": "string"
+          },
+          "response_body": {
+            "token": "string",
+            "user": {
+              "userID": "string",
+              "userName": "string"
+            },
+            "organisations": [
+              {
+                "organisationID": "string",
+                "organisationName": "string",
+                "users":
+                [
+                  {
+                    "userID": "string",
+                    "userName": "string",
+                    "permission": "int32"
+                  }
+                ],
+                "projects": [
+                  {
+                    "projectID": "string",
+                    "projectName": "string",
+                    "users": [
+                      {
+                        "userID": "string",
+                        "userName": "string",
+                        "permission": "int32"
+                      }
+                    ],
+                    "services": [
+                      {
+                        "serviceID": "string",
+                        "serviceName": "string",
+                        "users": [
+                          {
+                            "userID": "string",
+                            "userName": "string",
+                            "permission": "int32"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "/new": {
+          "method": "POST",
+          "request_body": {
+
+          },
+          "response_body": {
+
+          }
+        },
+        "": {
+          "method": "PUT",
+          "request_body": {
+
+          },
+          "response_body": {
+
+          }
+        },
+        "/:user_id": {
+          "method": "DELETE",
+          "request_header": {
+            "token": "bearer <token>"
+          }
+        }
+      },
+      "/organisation": {
+
+      },
+      "project": {
+
+      },
+      "service": {
+
+      }
+    }
+    }
+}

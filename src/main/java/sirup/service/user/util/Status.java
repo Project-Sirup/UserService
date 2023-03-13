@@ -2,6 +2,7 @@ package sirup.service.user.util;
 
 public enum Status {
     OK(200,"Request handled"),
+    CREATED(201,"Resource created"),
 
     BAD_REQUEST(400,"Bad request"),
     UNAUTHORIZED(401,"Wrong login credentials"),
@@ -9,7 +10,8 @@ public enum Status {
     ALREADY_EXISTS(417,"Item already exists"),
     INVALID_TOKEN(498,"Invalid token"),
 
-    NOT_IMPLEMENTED(501,"Endpoint not yet implemented");
+    NOT_IMPLEMENTED(501,"Endpoint not yet implemented"),
+    SERVICE_UNAVAILABLE(503,"Service unavailable");
     private final int code;
     private final String message;
     Status(int code, String message) {

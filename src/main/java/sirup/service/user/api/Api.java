@@ -1,36 +1,61 @@
 package sirup.service.user.api;
 
-import io.grpc.netty.shaded.io.netty.util.internal.logging.Slf4JLoggerFactory;
-import org.eclipse.jetty.server.Slf4jRequestLogWriter;
-import org.eclipse.jetty.util.log.Slf4jLog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.simple.SimpleLogger;
+import sirup.service.user.api.middleware.AuthMiddleware;
 import sirup.service.user.controllers.OrganisationController;
 import sirup.service.user.controllers.ProjectController;
+import sirup.service.user.controllers.MicroserviceController;
 import sirup.service.user.controllers.UserController;
-import sirup.service.user.database.IDatabase;
+import sirup.service.user.services.AbstractService;
 import sirup.service.user.util.SirupLogger;
+import spark.Filter;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Optional;
+import java.util.Scanner;
 
 import static spark.Spark.*;
 
 public class Api {
 
+    private Context context;
+    private final SirupLogger logger;
+    private final Filter authMiddleWare;
+    private final String doc;
+
     private Api() {
         this.logger = SirupLogger.getInstance();
+        this.authMiddleWare = new AuthMiddleware();
+        doc = getDocFromFile();
     }
 
-    private IDatabase database;
-    private final SirupLogger logger;
+    private String getDocFromFile() {
+        try {
+            URL url = this.getClass().getClassLoader().getResource("json/doc.json");
+            File docFile = new File(url.toURI());
+            try (Scanner input = new Scanner(docFile)) {
+                StringBuilder stringBuilder = new StringBuilder();
+                while (input.hasNextLine()) {
+                    stringBuilder.append(input.nextLine());
+                }
+                return stringBuilder.toString();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return "{}";
+    }
 
     private void setPort(final int port) {
         port(port);
     }
 
-    private void setDatabase(final IDatabase database) {
-        this.database = database;
+    private void setContext(final Context context) {
+        this.context = context;
     }
 
     public static ApiBuilder builder() {
@@ -49,8 +74,12 @@ public class Api {
             return this;
         }
 
-        public ApiBuilder database(final IDatabase database) {
-            this.api.setDatabase(database);
+        public ApiBuilder context(final Context.ContextBuilder contextBuilder) {
+            this.context(contextBuilder.build());
+            return this;
+        }
+        public ApiBuilder context(final Context context) {
+            this.api.setContext(context);
             return this;
         }
 
@@ -62,10 +91,11 @@ public class Api {
 
     public void start() {
         logger.info("Starting service...");
-        logger.warn("WARN");
-        if (!this.database.connect()) {
+        if (!this.context.getDatabase().connect()) {
+            logger.info("Could not connect to database");
             return;
         }
+        this.context.getServices().forEach(AbstractService::init);
         after((request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
@@ -83,41 +113,65 @@ public class Api {
             return "";
         }));
         path("api/v1", () -> {
-            get("",((request, response) -> "Sirup UserService"));
+            defaultRoutes();
             organisationRoutes();
             projectRoutes();
+            serviceRoutes();
             userRoutes();
         });
 
         logger.info("Service Running, Listening @ http://127.0.0.1:" + port() + "/api/v1");
     }
+    private void defaultRoutes() {
+        get("/health", ((request, response) -> {
+            return "ok";
+        }));
+        get("", ((request, response) -> {
+            response.header("Content-Type","application/json");
+            return doc;
+        }));
+    }
 
     public void organisationRoutes() {
-        final OrganisationController oc = new OrganisationController(this.database.getConnection());
+        final OrganisationController oc = new OrganisationController(this.context);
         path("/organisation", () -> {
-            post("",   oc::store);
-            post("/addUser", oc::addUser);
-            put("",    oc::update);
-            delete("", oc::remove);
+            before("",                          this.authMiddleWare);
+            get("/:organisationId",             oc::find);
+            post("",                            oc::store);
+            //post("/:organisationId/user/invite",oc::inviteUser);
+            post("/:organisationId/user/accept",oc::addUser);
+            put("",                             oc::update);
+            delete("",                          oc::remove);
         });
     }
 
     public void projectRoutes() {
-        final ProjectController pc = new ProjectController(this.database.getConnection());
+        final ProjectController pc = new ProjectController(this.context);
         path("/project", () -> {
+            before("", this.authMiddleWare);
             post("",    pc::store);
             put("",     pc::update);
             delete("",  pc::remove);
         });
     }
 
+    public void serviceRoutes() {
+        final MicroserviceController sc = new MicroserviceController(this.context);
+        path("/service", () -> {
+            before("", this.authMiddleWare);
+            post("", sc::store);
+        });
+    }
+
     public void userRoutes() {
-        final UserController uc = new UserController(this.database.getConnection());
+        final UserController uc = new UserController(this.context);
         path("/user", () -> {
-            post("",        uc::store);
-            post("/login",  uc::login);
-            put("",         uc::update);
-            delete("",      uc::remove);
+            before("/id/:userId",  this.authMiddleWare);
+            post("/login",      uc::login);
+            post("",            uc::store);
+            put("/id/:userId",     uc::update);
+            delete("/id/:userId",  uc::remove);
+
         });
     }
 }

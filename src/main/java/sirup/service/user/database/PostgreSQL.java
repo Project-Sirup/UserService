@@ -1,6 +1,7 @@
 package sirup.service.user.database;
 
 import sirup.service.user.dto.User;
+import sirup.service.user.util.SirupLogger;
 
 import java.sql.*;
 import java.util.UUID;
@@ -17,17 +18,7 @@ public class PostgreSQL implements IDatabase {
     public boolean connect() {
         try {
             this.connection = DriverManager.getConnection(connectionString, user, password);
-            System.out.println("Connected to PostgreSQL");
-            String query = "SELECT * FROM users;";
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
-            while (resultSet.next()) {
-                System.out.println(
-                        new User(
-                                UUID.fromString(resultSet.getString("userID")),
-                                resultSet.getString("userName"),
-                                resultSet.getString("password")));
-            }
+            SirupLogger.getInstance().info("Connected to PostgreSQL");
         } catch (SQLException e) {
             System.err.println(e.getMessage());
             return false;

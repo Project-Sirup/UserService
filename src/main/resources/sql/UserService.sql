@@ -7,7 +7,7 @@ CREATE TABLE users (
     PRIMARY KEY(userID)
 );
 
-CREATE TABLE services (
+CREATE TABLE microservices (
     serviceID VARCHAR(255) NOT NULL,
     serviceName VARCHAR(255) NOT NULL,
     serviceFile JSON,
@@ -48,9 +48,9 @@ CREATE TABLE projectPermissions (
     PRIMARY KEY(userID, projectID, permissionID)
 );
 
-CREATE TABLE servicePermissions (
+CREATE TABLE microservicesPermissions (
     userID VARCHAR(255) NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
-    serviceID VARCHAR(255) NOT NULL REFERENCES services(serviceID) ON DELETE CASCADE,
+    serviceID VARCHAR(255) NOT NULL REFERENCES microservices(serviceID) ON DELETE CASCADE,
     permissionID INTEGER NOT NULL REFERENCES permissions(permissionID),
     PRIMARY KEY(userID, serviceID, permissionID)
 );
