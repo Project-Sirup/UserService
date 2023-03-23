@@ -6,6 +6,7 @@ import sirup.service.user.controllers.ProjectController;
 import sirup.service.user.controllers.MicroserviceController;
 import sirup.service.user.controllers.UserController;
 import sirup.service.user.services.AbstractService;
+import sirup.service.user.util.Env;
 import sirup.service.user.util.SirupLogger;
 import spark.Filter;
 
@@ -24,6 +25,8 @@ public class Api {
     private final SirupLogger logger;
     private final Filter authMiddleWare;
     private final String doc;
+
+    private final String baseUrl = Env.API_BASE_URL;
 
     private Api() {
         this.logger = SirupLogger.getInstance();
@@ -96,7 +99,6 @@ public class Api {
             return;
         }
         this.context.getServices().forEach(AbstractService::init);
-        port(2103);
         after((request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
@@ -113,7 +115,7 @@ public class Api {
                     .ifPresent(header -> response.header("Access-Control-Allow-Methods", header));
             return "";
         }));
-        path("api/v1", () -> {
+        path(baseUrl, () -> {
             defaultRoutes();
             organisationRoutes();
             projectRoutes();
@@ -121,7 +123,7 @@ public class Api {
             userRoutes();
         });
 
-        logger.info("Service Running, Listening @ http://127.0.0.1:" + port() + "/api/v1");
+        logger.info("Service Running, Listening @ http://127.0.0.1:" + port() + baseUrl);
     }
     private void defaultRoutes() {
         get("/health", ((request, response) -> {

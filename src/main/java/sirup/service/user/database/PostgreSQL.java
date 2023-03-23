@@ -1,16 +1,15 @@
 package sirup.service.user.database;
 
-import sirup.service.user.dto.User;
+import sirup.service.user.util.Env;
 import sirup.service.user.util.SirupLogger;
 
 import java.sql.*;
-import java.util.UUID;
 
 public class PostgreSQL implements IDatabase {
 
-    private final String connectionString = "jdbc:postgresql://localhost:5432/sirupuser";
-    private final String user = "postgres";
-    private final String password = "admin";
+    private final String connectionString = Env.POSTGRES_CONNECTION_STRING;
+    private final String user = Env.POSTGRES_USER;
+    private final String password = Env.POSTGRES_PASSWORD;
 
     private Connection connection;
 

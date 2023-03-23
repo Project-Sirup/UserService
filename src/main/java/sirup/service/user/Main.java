@@ -12,12 +12,13 @@ import sirup.service.user.services.MicroserviceService;
 import sirup.service.user.services.OrganisationService;
 import sirup.service.user.services.ProjectService;
 import sirup.service.user.services.UserService;
+import sirup.service.user.util.Env;
 
 public class Main {
     public static void main(String[] args) {
-        AuthClient.init("localhost",50051);
+        AuthClient.init(Env.AUTH_URL,Env.AUTH_PORT);
         Api.builder()
-                .port(2149)
+                .port(Env.API_PORT)
                 .context(
                         Context.builder()
                                 .database(new PostgreSQL())

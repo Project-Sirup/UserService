@@ -12,9 +12,9 @@ public class ApiTest {
 
     @Test
     public void builderTest() {
-        AuthClient.init("localhost",50051);
+        AuthClient.init("localhost",2101);
         Api api = Api.builder()
-                .port(2149)
+                .port(2103)
                 .context(
                         Context.builder()
                                 .database(new PostgreSQL())
