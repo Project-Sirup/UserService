@@ -29,7 +29,7 @@ public class UserController extends AbstractController {
             return this.sendResponseAsJson(response,
                     new ReturnObj<>("Login success",
                             new LoginResponse(token, user)));
-        } catch (CouldNotMakeResourceException e) {
+        } catch (CouldNotMakeResourceException | ResourceNotFoundException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.UNAUTHORIZED, e.getMessage()));
         } catch (AuthServiceUnavailableException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.SERVICE_UNAVAILABLE, "AuthenticationService unavailable"));

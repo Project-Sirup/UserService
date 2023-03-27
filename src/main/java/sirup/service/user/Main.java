@@ -1,6 +1,7 @@
 package sirup.service.user;
 
 import sirup.service.auth.rpc.client.AuthClient;
+import sirup.service.log.rpc.client.LogClient;
 import sirup.service.user.api.Api;
 import sirup.service.user.api.Context;
 import sirup.service.user.database.PostgreSQL;
@@ -16,7 +17,8 @@ import sirup.service.user.util.Env;
 
 public class Main {
     public static void main(String[] args) {
-        AuthClient.init(Env.AUTH_URL,Env.AUTH_PORT);
+        AuthClient.init(Env.AUTH_URL, Env.AUTH_PORT);
+        LogClient.init(Env.LOG_URL, Env.LOG_PORT, "UserService");
         Api.builder()
                 .port(Env.API_PORT)
                 .context(

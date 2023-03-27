@@ -1,5 +1,6 @@
 package sirup.service.user.api;
 
+import sirup.service.log.rpc.client.LogClient;
 import sirup.service.user.api.middleware.AuthMiddleware;
 import sirup.service.user.controllers.OrganisationController;
 import sirup.service.user.controllers.ProjectController;
@@ -7,7 +8,6 @@ import sirup.service.user.controllers.MicroserviceController;
 import sirup.service.user.controllers.UserController;
 import sirup.service.user.services.AbstractService;
 import sirup.service.user.util.Env;
-import sirup.service.user.util.SirupLogger;
 import spark.Filter;
 
 import java.io.File;
@@ -22,14 +22,14 @@ import static spark.Spark.*;
 public class Api {
 
     private Context context;
-    private final SirupLogger logger;
+    private final LogClient logger;
     private final Filter authMiddleWare;
     private final String doc;
 
     private final String baseUrl = Env.API_BASE_URL;
 
     private Api() {
-        this.logger = SirupLogger.getInstance();
+        this.logger = LogClient.getInstance();
         this.authMiddleWare = new AuthMiddleware();
         doc = getDocFromFile();
     }
@@ -93,9 +93,8 @@ public class Api {
     }
 
     public void start() {
-        logger.info("Starting service...");
         if (!this.context.getDatabase().connect()) {
-            logger.info("Could not connect to database");
+            logger.error("Could not connect to database");
             return;
         }
         this.context.getServices().forEach(AbstractService::init);
@@ -123,7 +122,7 @@ public class Api {
             userRoutes();
         });
 
-        logger.info("Service Running, Listening @ http://127.0.0.1:" + port() + baseUrl);
+        logger.info("Service Running, listening on " + port());
     }
     private void defaultRoutes() {
         get("/health", ((request, response) -> {
@@ -144,7 +143,7 @@ public class Api {
             //post("/:organisationId/user/invite",oc::inviteUser);
             post("/:organisationId/user/accept",oc::addUser);
             put("",                             oc::update);
-            delete("",                          oc::remove);
+            delete("/:organisationId",          oc::remove);
         });
     }
 
@@ -169,11 +168,11 @@ public class Api {
     public void userRoutes() {
         final UserController uc = new UserController(this.context);
         path("/user", () -> {
-            before("/id/:userId",  this.authMiddleWare);
-            post("/login",      uc::login);
-            post("",            uc::store);
-            put("/id/:userId",     uc::update);
-            delete("/id/:userId",  uc::remove);
+            before("/protected/:userId",  this.authMiddleWare);
+            post("/login",          uc::login);
+            post("",                uc::store);
+            put("/protected/:userId",      uc::update);
+            delete("/protected/:userId",   uc::remove);
 
         });
     }

@@ -10,6 +10,8 @@ public class Env {
     public static final int API_PORT;
     public static final String AUTH_URL;
     public static final int AUTH_PORT;
+    public static final String LOG_URL;
+    public static final int LOG_PORT;
     static {
         Dotenv dotenv = Dotenv.load();
         POSTGRES_CONNECTION_STRING = dotenv.get("POSTGRES_CONNECTION_STRING");
@@ -19,5 +21,7 @@ public class Env {
         API_PORT = Integer.parseInt(dotenv.get("API_PORT"));
         AUTH_URL = dotenv.get("AUTH_URL");
         AUTH_PORT = Integer.parseInt(dotenv.get("AUTH_PORT"));
+        LOG_URL = dotenv.get("LOG_URL");
+        LOG_PORT = Integer.parseInt(dotenv.get("LOG_PORT"));
     }
 }

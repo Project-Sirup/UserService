@@ -3,7 +3,6 @@ package sirup.service.user.api;
 import sirup.service.user.database.IDatabase;
 import sirup.service.user.interfaces.DTO;
 import sirup.service.user.services.AbstractService;
-import sirup.service.user.util.SirupLogger;
 
 import java.util.Collection;
 import java.util.HashMap;

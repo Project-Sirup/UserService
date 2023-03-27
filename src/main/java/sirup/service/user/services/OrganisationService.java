@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 public class OrganisationService extends AbstractService<Organisation> {
 
@@ -120,6 +121,11 @@ public class OrganisationService extends AbstractService<Organisation> {
         }
 
         @Override
+        public List<PrivilegeLevel> getAll(User user) {
+            return null;
+        }
+
+        @Override
         public PrivilegeLevel get(Organisation organisation, User user) {
             return null;
         }
@@ -144,6 +150,11 @@ public class OrganisationService extends AbstractService<Organisation> {
         @Override
         public boolean add(User sender, User receiver, Organisation organisation) {
             return false;
+        }
+
+        @Override
+        public List<Organisation> getAll(User user) {
+            return null;
         }
 
         @Override

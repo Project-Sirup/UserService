@@ -17,12 +17,12 @@ public class AuthMiddleware implements Filter {
     @Override
     public void handle(Request request, Response response) throws ExternalServiceException {
         String token = request.headers("Token");
-        String userId = request.params(":userId");
+        String userId = request.params("userId");
         if (userId == null) {
             halt(Status.BAD_REQUEST.getCode(), "Missing {userId} from url");
         }
         if (token == null || token.isEmpty()) {
-            halt(Status.BAD_REQUEST.getCode(), "Missing {token} from body");
+            halt(Status.BAD_REQUEST.getCode(), "Missing {token} from header");
         }
         try {
             if (!AUTH_CLIENT.auth(token, userId)) {
