@@ -9,7 +9,7 @@ import sirup.service.user.util.Status;
 import spark.Request;
 import spark.Response;
 
-import java.util.UUID;
+import static sirup.service.log.rpc.client.ColorUtil.*;
 
 public class UserController extends AbstractController {
 
@@ -24,8 +24,8 @@ public class UserController extends AbstractController {
             if (!user.password().equals(loginRequest.password())) {
                 return this.sendResponseAsJson(response, new ReturnObj<>(Status.UNAUTHORIZED));
             }
-            String token = this.authClient.token(user.userId().toString());
-            logger.info("/// Login usr with id = " + user.userId());
+            String token = this.authClient.token(user.userId());
+            logger.info(id(user.userId()) + " -> " + action("login"));
             return this.sendResponseAsJson(response,
                     new ReturnObj<>("Login success",
                             new LoginResponse(token, user)));
@@ -35,6 +35,18 @@ public class UserController extends AbstractController {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.SERVICE_UNAVAILABLE, "AuthenticationService unavailable"));
         }
     }
+
+    public Object find(Request request, Response response) {
+        try {
+            String userId = request.headers("UserId");
+            User user = this.users.get(userId);
+            logger.info(id(userId) + " -> " + action("found"));
+            return user;
+        } catch (ResourceNotFoundException e) {
+            return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST));
+        }
+    }
+
     private record LoginResponse(String token, User user){}
     private record LoginRequest(String userName, String password) {}
 
@@ -43,8 +55,8 @@ public class UserController extends AbstractController {
             StoreRequest storeRequest = this.gson.fromJson(request.body(), StoreRequest.class);
             User user = new User(storeRequest.userName(), storeRequest.password());
             this.users.add(user);
-            String token = this.authClient.token(user.userId().toString());
-            logger.info("+++ Created usr with id = " + user.userId());
+            String token = this.authClient.token(user.userId());
+            logger.info(id(user.userId()) + " -> " + action("created"));
             return this.sendResponseAsJson(response, new ReturnObj<>("User created", new StoreResponse(token, user.userId().toString())));
         } catch (CouldNotMakeResourceException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.ALREADY_EXISTS, e.getMessage()));
@@ -57,18 +69,18 @@ public class UserController extends AbstractController {
 
     public Object update(Request request, Response response) {
         try {
-            String userId = request.params(":userId");
+            String userId = request.headers("UserId");
             UpdateRequest updateRequest = this.gson.fromJson(request.body(), UpdateRequest.class);
-            if (!this.users.update(new User(UUID.fromString(userId), updateRequest.userName()))) {
+            if (!this.users.update(new User(userId, updateRequest.userName(), updateRequest.password()))) {
                 return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST));
             }
-            logger.info("### Update usr");
+            logger.info(id(userId) + " -> " + action("updated"));
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.OK));
         } catch (ResourceNotFoundException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST, e.getMessage()));
         }
     }
-    private record UpdateRequest(String userName) {}
+    private record UpdateRequest(String userName, String password) {}
 
     public Object remove(Request request, Response response) {
         try {
@@ -76,7 +88,7 @@ public class UserController extends AbstractController {
             if (!this.users.delete(removeRequest.userId())) {
                 return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST));
             }
-            logger.info("--- Deleted user with id = " + removeRequest.userId());
+            logger.info(id(removeRequest.userId()) + " -> " + action("deleted"));
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.OK, "User deleted"));
         } catch (ResourceNotFoundException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST, e.getMessage()));

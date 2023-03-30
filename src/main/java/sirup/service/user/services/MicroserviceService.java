@@ -6,33 +6,33 @@ import sirup.service.user.exceptions.ResourceNotFoundException;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 public class MicroserviceService extends AbstractService<Microservice> {
 
-    @Override
-    public boolean add(Microservice microservice) throws CouldNotMakeResourceException {
-        return false;
+    public String add(Microservice microservice) throws CouldNotMakeResourceException {
+        throw new RuntimeException("Not implemented");
     }
 
-    @Override
     public Microservice get(String id) throws ResourceNotFoundException {
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 
-    @Override
     public Microservice getBy(String columnName, String key) throws ResourceNotFoundException {
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 
-    @Override
+    public List<Microservice> getAll(String id) {
+        throw new RuntimeException("Not implemented");
+    }
+
     public boolean update(Microservice microservice) throws ResourceNotFoundException {
-        return false;
+        throw new RuntimeException("Not implemented");
     }
 
-    @Override
     public boolean delete(String id) throws ResourceNotFoundException {
         try {
-            String deleteQuery = "DELETE FROM services WHERE projectId = ?";
+            String deleteQuery = "DELETE FROM microservices WHERE projectId = ?";
             PreparedStatement deleteStatement = this.connection.prepareStatement(deleteQuery);
             deleteStatement.setString(1, id);
             deleteStatement.executeUpdate();

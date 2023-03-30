@@ -20,7 +20,7 @@ public class PostgreSQL implements IDatabase {
             this.connection = DriverManager.getConnection(connectionString, user, password);
         } catch (SQLException e) {
             System.err.println(e.getMessage());
-            logger.error("Could not connect yo PostgreSQL");
+            logger.error("Could not connect to PostgreSQL");
             return false;
         }
         return true;

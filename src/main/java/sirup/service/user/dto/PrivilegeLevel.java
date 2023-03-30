@@ -5,10 +5,12 @@ import java.sql.SQLException;
 
 //TODO: Rename to permission
 public enum PrivilegeLevel {
-    DEFAULT(0),
-    MANAGER(1),
-    ADMIN(2),
-    OWNER(3);
+    NO_ACCESS(-1),
+    VIEW(0),
+    EDIT(1),
+    MANAGER(2),
+    ADMIN(3),
+    OWNER(4);
     public final int id;
     PrivilegeLevel(final int id) {
         this.id = id;
@@ -16,15 +18,21 @@ public enum PrivilegeLevel {
     public static PrivilegeLevel fromId(int id) {
         switch (id) {
             default -> {
-                return DEFAULT;
+                return NO_ACCESS;
+            }
+            case 0 -> {
+                return VIEW;
             }
             case 1 -> {
-                return MANAGER;
+                return EDIT;
             }
             case 2 -> {
-                return ADMIN;
+                return MANAGER;
             }
             case 3 -> {
+                return ADMIN;
+            }
+            case 4 -> {
                 return OWNER;
             }
         }
@@ -33,7 +41,7 @@ public enum PrivilegeLevel {
         try {
             return PrivilegeLevel.fromId(resultSet.getInt("permissionID"));
         } catch (SQLException e) {
-            return PrivilegeLevel.DEFAULT;
+            return PrivilegeLevel.NO_ACCESS;
         }
     }
 }

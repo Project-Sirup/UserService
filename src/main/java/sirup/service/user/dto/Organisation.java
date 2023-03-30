@@ -8,24 +8,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public record Organisation(UUID organisationId, String organisationName, Set<Project> projects, Set<User> users) implements DTO {
+public record Organisation(String organisationId, String organisationName, Set<Project> projects, Set<User> users) implements DTO {
 
     public Organisation(String organisationName) {
-        this(UUID.randomUUID(), organisationName, new HashSet<>(), new HashSet<>());
+        this(UUID.randomUUID().toString(), organisationName, new HashSet<>(), new HashSet<>());
     }
-    public Organisation(UUID organisationId, String organisationName) {
+    public Organisation(String organisationId, String organisationName) {
         this(organisationId, organisationName, new HashSet<>(), new HashSet<>());
     }
 
     @Override
     public String getId() {
-        return organisationId().toString();
+        return organisationId();
     }
 
     public static Organisation fromResultSet(ResultSet resultSet) throws CouldNotMakeResourceException {
         try {
             return new Organisation(
-                    UUID.fromString(resultSet.getString("organisationID")),
+                    resultSet.getString("organisationID"),
                     resultSet.getString("organisationName"));
         } catch (NullPointerException | SQLException e) {
            throw new CouldNotMakeResourceException("Could not make organisation from ResultSet");
@@ -46,6 +46,6 @@ public record Organisation(UUID organisationId, String organisationName, Set<Pro
             return false;
         }
         Organisation o = (Organisation) obj;
-        return this.organisationId().equals(o.organisationId());
+        return this.getId().equals(o.getId());
     }
 }

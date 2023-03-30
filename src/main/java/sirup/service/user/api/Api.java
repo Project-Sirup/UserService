@@ -1,11 +1,9 @@
 package sirup.service.user.api;
 
 import sirup.service.log.rpc.client.LogClient;
+import sirup.service.log.rpc.client.LogServiceUnavailableException;
 import sirup.service.user.api.middleware.AuthMiddleware;
-import sirup.service.user.controllers.OrganisationController;
-import sirup.service.user.controllers.ProjectController;
-import sirup.service.user.controllers.MicroserviceController;
-import sirup.service.user.controllers.UserController;
+import sirup.service.user.controllers.*;
 import sirup.service.user.services.AbstractService;
 import sirup.service.user.util.Env;
 import spark.Filter;
@@ -94,7 +92,7 @@ public class Api {
 
     public void start() {
         if (!this.context.getDatabase().connect()) {
-            logger.error("Could not connect to database");
+            logger.error("Failed to start");
             return;
         }
         this.context.getServices().forEach(AbstractService::init);
@@ -114,66 +112,64 @@ public class Api {
                     .ifPresent(header -> response.header("Access-Control-Allow-Methods", header));
             return "";
         }));
+        final UserController uc = new UserController(this.context);
+        final OrganisationController oc = new OrganisationController(this.context);
+        final ProjectController pc = new ProjectController(this.context);
+        final MicroserviceController mc = new MicroserviceController(this.context);
+        final InviteController ic = new InviteController(this.context);
+
         path(baseUrl, () -> {
-            defaultRoutes();
-            organisationRoutes();
-            projectRoutes();
-            serviceRoutes();
-            userRoutes();
+            get("/health", ((request, response) -> "ok"));
+            get("", ((request, response) -> {
+                response.header("Content-Type","application/json");
+                return doc;
+            }));
+            path("/user", () -> {
+                post("/login",                              uc::login);
+                post("",                                    uc::store);
+            });
+            path("/protected", () -> {                      //Protected
+                before("/*",                     this.authMiddleWare); //Calls AuthService
+                path("/user", () -> {
+                    get("",                                 uc::find);
+                    put("",                                 uc::update);
+                    delete("",                              uc::remove);
+                    get("/organisations",                   oc::findAll);
+                });
+                path("/organisation", () -> {
+                    get("/:organisationId",                 oc::find);
+                    post("",                                oc::store);
+                    put("/:organisationId",                 oc::update);
+                    delete("/:organisationId",              oc::remove);
+                });
+                path("/project", () -> {
+                    get("/:projectId",                      pc::find);
+                    post("",                                pc::store);
+                    put("/:projectId",                      pc::update);
+                    delete("/:projectId",                   pc::remove);
+                });
+                path("/microservice", () -> {
+                    get("/:microserviceId",                 mc::find);
+                    post("",                                mc::store);
+                    put("/:microserviceId",                 mc::update);
+                    delete("/:microserviceId",              mc::delete);
+                });
+                path("/invite", () -> {
+                    get("",                                 ic::find);
+                    post("",                                ic::store);
+                    post("/response",                       ic::response);
+                    delete("",                              ic::remove);
+                });
+            });
         });
 
         logger.info("Service Running, listening on " + port());
-    }
-    private void defaultRoutes() {
-        get("/health", ((request, response) -> {
-            return "ok";
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                logger.warn("Shutting down");
+            } catch (LogServiceUnavailableException e) {
+                System.err.println("Could not log shutdown");
+            }
         }));
-        get("", ((request, response) -> {
-            response.header("Content-Type","application/json");
-            return doc;
-        }));
-    }
-
-    public void organisationRoutes() {
-        final OrganisationController oc = new OrganisationController(this.context);
-        path("/organisation", () -> {
-            before("",                          this.authMiddleWare);
-            get("/:organisationId",             oc::find);
-            post("",                            oc::store);
-            //post("/:organisationId/user/invite",oc::inviteUser);
-            post("/:organisationId/user/accept",oc::addUser);
-            put("",                             oc::update);
-            delete("/:organisationId",          oc::remove);
-        });
-    }
-
-    public void projectRoutes() {
-        final ProjectController pc = new ProjectController(this.context);
-        path("/project", () -> {
-            before("", this.authMiddleWare);
-            post("",    pc::store);
-            put("",     pc::update);
-            delete("",  pc::remove);
-        });
-    }
-
-    public void serviceRoutes() {
-        final MicroserviceController sc = new MicroserviceController(this.context);
-        path("/service", () -> {
-            before("", this.authMiddleWare);
-            post("", sc::store);
-        });
-    }
-
-    public void userRoutes() {
-        final UserController uc = new UserController(this.context);
-        path("/user", () -> {
-            before("/protected/:userId",  this.authMiddleWare);
-            post("/login",          uc::login);
-            post("",                uc::store);
-            put("/protected/:userId",      uc::update);
-            delete("/protected/:userId",   uc::remove);
-
-        });
     }
 }

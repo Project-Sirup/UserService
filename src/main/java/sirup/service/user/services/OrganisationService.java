@@ -1,45 +1,38 @@
 package sirup.service.user.services;
 
+import sirup.service.user.dto.Microservice;
 import sirup.service.user.dto.Organisation;
-import sirup.service.user.dto.PrivilegeLevel;
-import sirup.service.user.dto.User;
+import sirup.service.user.dto.Project;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
-import sirup.service.user.interfaces.ServiceRelation;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+
+import static sirup.service.log.rpc.client.ColorUtil.*;
 
 public class OrganisationService extends AbstractService<Organisation> {
 
-    public final UserPermission userPermission;
-    public final UserInvite userInvite;
-    public OrganisationService(){
-        this.userPermission = new UserPermission(this.connection);
-        this.userInvite = new UserInvite(this.connection);
-    }
-
-    @Override
-    public boolean add(Organisation organisation) {
+    public String add(Organisation organisation) {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> add -> " + organisation.getId());
+            logger.info(this.getClass().getSimpleName() + " -> " + id(organisation.getId()) + " -> " + action("created"));
             String insertQuery = "INSERT INTO organisations (organisationid, organisationname) VALUES (?, ?);";
             PreparedStatement insertStatement = this.connection.prepareStatement(insertQuery);
-            insertStatement.setString(1, organisation.organisationId().toString());
+            insertStatement.setString(1, organisation.organisationId());
             insertStatement.setString(2, organisation.organisationName());
-            return insertStatement.execute();
+            insertStatement.execute();
+            return organisation.getId();
         } catch (SQLException e) {
             throw new CouldNotMakeResourceException(e.getMessage());
         }
     }
 
-    @Override
     public Organisation get(String id) throws ResourceNotFoundException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> get -> " + id);
+            logger.info(this.getClass().getSimpleName() + " -> " + id(id) + " -> " + action("found"));
             String selectQuery = "SELECT * FROM organisations WHERE organisationId = ?;";
             PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
             selectStatement.setString(1, id);
@@ -53,10 +46,9 @@ public class OrganisationService extends AbstractService<Organisation> {
         }
     }
 
-    @Override
     public Organisation getBy(String columnName, String key) throws ResourceNotFoundException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> getBy -> " + columnName + " = " + key);
+            logger.info(this.getClass().getSimpleName() + " -> " + columnName + " = " + key + " -> " + action("found"));
             String selectQuery = "SELECT * FROM organisations WHERE " + columnName + " = ?";
             PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
             selectStatement.setString(1, key);
@@ -70,24 +62,62 @@ public class OrganisationService extends AbstractService<Organisation> {
         }
     }
 
-    @Override
+    public List<Organisation> getAll(String id) {
+        List<Organisation> organisations = new ArrayList<>();
+        try {
+            String selectQuery = "SELECT * FROM organisations o " +
+                    "INNER JOIN organisationpermissions op ON o.organisationid = op.organisationid " +
+                    "FULL JOIN projects p ON oP.organisationid = p.organisationid " +
+                    "FULL JOIN microservices m on p.projectid = m.projectid " +
+                    "INNER JOIN users u ON oP.userId = u.userId " +
+                    "WHERE op.userid = ?";
+            PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
+            selectStatement.setString(1, id);
+            ResultSet resultSet = selectStatement.executeQuery();
+            while (resultSet.next()) {
+                Organisation organisation = Organisation.fromResultSet(resultSet);
+                Project project = null;
+                try {
+                    project = Project.fromResultSet(resultSet);
+                } catch (CouldNotMakeResourceException e) {}
+                Microservice microservice = null;
+                try {
+                    microservice = Microservice.fromResultSet(resultSet);
+                } catch (CouldNotMakeResourceException e) {}
+                if (project != null) {
+                    System.out.println(project.projectName());
+                    if (microservice != null) {
+                        project.microservices().add(microservice);
+                    }
+                    organisation.projects().add(project);
+                }
+                organisations.add(organisation);
+            }
+        } catch (SQLException e) {
+            throw new ResourceNotFoundException("Could not find organisations for user with id: " + id);
+        } catch (CouldNotMakeResourceException e) {
+            System.err.println(e.getMessage());
+        }
+        return organisations;
+    }
+
     public boolean update(Organisation organisation) throws ResourceNotFoundException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> update -> " + organisation.getId());
+            logger.info(this.getClass().getSimpleName() + " -> " + id(organisation.getId()) + " -> " + action("updated"));
             String updateQuery = "UPDATE organisations SET organisationName = ? WHERE organisationId = ?";
             PreparedStatement updateStatement = this.connection.prepareStatement(updateQuery);
             updateStatement.setString(1, organisation.organisationName());
-            updateStatement.setString(2, organisation.organisationId().toString());
-            return updateStatement.executeUpdate() > 0;
+            updateStatement.setString(2, organisation.organisationId());
+            updateStatement.executeUpdate();
+            return updateStatement.getUpdateCount() > 0;
         } catch (SQLException e) {
             throw new ResourceNotFoundException(e.getMessage());
         }
     }
 
-    @Override
     public boolean delete(String id) throws ResourceNotFoundException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> delete -> " + id);
+            logger.info(this.getClass().getSimpleName() + " -> " + id(id) + " -> " + action("deleted"));
             String deleteQuery = "DELETE FROM organisations WHERE organisationId = ?";
             PreparedStatement deleteStatement = this.connection.prepareStatement(deleteQuery);
             deleteStatement.setString(1, id);
@@ -96,80 +126,6 @@ public class OrganisationService extends AbstractService<Organisation> {
         } catch (SQLException e) {
             e.printStackTrace();
             throw new ResourceNotFoundException(e.getMessage());
-        }
-    }
-
-    public static class UserPermission implements ServiceRelation<Organisation, User, PrivilegeLevel> {
-
-        private final Connection connection;
-        private UserPermission(final Connection connection) {
-            this.connection = connection;
-        }
-
-        @Override
-        public boolean add(Organisation organisation, User user, PrivilegeLevel privilegeLevel) {
-            try {
-                String insertQuery = "INSERT INTO organisationpermissions (userid, organisationid, permissionid) VALUES (?, ?, ?);";
-                PreparedStatement insertStatement = this.connection.prepareStatement(insertQuery);
-                insertStatement.setString(1, user.userId().toString());
-                insertStatement.setString(2, organisation.organisationId().toString());
-                insertStatement.setInt(3, privilegeLevel.id);
-                return insertStatement.execute();
-            } catch (SQLException e) {
-                throw new CouldNotMakeResourceException(e.getMessage());
-            }
-        }
-
-        @Override
-        public List<PrivilegeLevel> getAll(User user) {
-            return null;
-        }
-
-        @Override
-        public PrivilegeLevel get(Organisation organisation, User user) {
-            return null;
-        }
-
-        @Override
-        public boolean update(Organisation organisation, User user, PrivilegeLevel privilegeLevel) {
-            return false;
-        }
-
-        @Override
-        public boolean delete(Organisation organisation, User user, PrivilegeLevel privilegeLevel) {
-            return false;
-        }
-    }
-    public static class UserInvite implements ServiceRelation<User, User, Organisation> {
-
-        private final Connection connection;
-        private UserInvite(final Connection connection) {
-            this.connection = connection;
-        }
-
-        @Override
-        public boolean add(User sender, User receiver, Organisation organisation) {
-            return false;
-        }
-
-        @Override
-        public List<Organisation> getAll(User user) {
-            return null;
-        }
-
-        @Override
-        public Organisation get(User sender, User receiver) {
-            return null;
-        }
-
-        @Override
-        public boolean update(User sender, User receiver, Organisation organisation) {
-            return false;
-        }
-
-        @Override
-        public boolean delete(User sender, User receiver, Organisation organisation) {
-            return false;
         }
     }
 }

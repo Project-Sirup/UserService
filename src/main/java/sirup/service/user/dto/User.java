@@ -8,32 +8,29 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-public record User(UUID userId, String userName, String password, PrivilegeLevel privilegeLevel) implements DTO {
+public record User(String userId, String userName, String password, PrivilegeLevel privilegeLevel) implements DTO {
 
     private static final Gson GSON = new Gson();
 
     public User (String userName, String password) {
-        this(UUID.randomUUID(), userName, password, PrivilegeLevel.DEFAULT);
+        this(UUID.randomUUID().toString(), userName, password, PrivilegeLevel.VIEW);
     }
-    public User(UUID userId, String userName) {
-        this(userId, userName, "", PrivilegeLevel.DEFAULT);
+    public User(String userId, String userName, String password) {
+        this(userId, userName, password, PrivilegeLevel.VIEW);
     }
-    public User(UUID userId, String userName, String password) {
-        this(userId, userName, password, PrivilegeLevel.DEFAULT);
-    }
-    public User(UUID userId, String userName, PrivilegeLevel privilegeLevel) {
+    public User(String userId, String userName, PrivilegeLevel privilegeLevel) {
         this(userId, userName, "", privilegeLevel);
     }
 
     @Override
     public String getId() {
-        return userId().toString();
+        return userId();
     }
 
     public static User fromResultSetWithPass(ResultSet resultSet) throws CouldNotMakeResourceException {
         try {
             return new User(
-                    UUID.fromString(resultSet.getString("userId")),
+                    resultSet.getString("userId"),
                     resultSet.getString("userName"),
                     resultSet.getString("password"),
                     PrivilegeLevel.fromResultSet(resultSet));
@@ -46,7 +43,7 @@ public record User(UUID userId, String userName, String password, PrivilegeLevel
     public static User fromResultSet(ResultSet resultSet) throws CouldNotMakeResourceException {
         try {
             return new User(
-                    UUID.fromString(resultSet.getString("userId")),
+                    resultSet.getString("userId"),
                     resultSet.getString("userName"),
                     PrivilegeLevel.fromResultSet(resultSet));
         } catch (SQLException e) {
@@ -68,6 +65,6 @@ public record User(UUID userId, String userName, String password, PrivilegeLevel
             return false;
         }
         User u = (User) obj;
-        return this.userId().equals(u.userId());
+        return this.getId().equals(u.getId());
     }
 }

@@ -15,7 +15,7 @@ public class OrganisationServiceTest {
     OrganisationService service;
     PostgreSQL postgreSQL;
     Organisation testOrg;
-    UUID uuid = UUID.randomUUID();
+    String uuid = UUID.randomUUID().toString();
 
     @Before
     public void setUp() throws Exception {

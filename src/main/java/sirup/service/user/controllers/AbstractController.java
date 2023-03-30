@@ -4,10 +4,7 @@ import com.google.gson.Gson;
 import sirup.service.auth.rpc.client.AuthClient;
 import sirup.service.log.rpc.client.LogClient;
 import sirup.service.user.api.Context;
-import sirup.service.user.dto.Microservice;
-import sirup.service.user.dto.Organisation;
-import sirup.service.user.dto.Project;
-import sirup.service.user.dto.User;
+import sirup.service.user.dto.*;
 import sirup.service.user.services.*;
 import sirup.service.user.util.Status;
 import spark.Response;
@@ -26,6 +23,9 @@ public abstract class AbstractController {
     protected final OrganisationService organisations;
     protected final ProjectService projects;
     protected final MicroserviceService microservices;
+    protected final InviteService invites;
+    protected final OrganisationPermissionService organisationPermissions;
+    protected final ProjectPermissionService projectPermissions;
 
     public AbstractController(final Context context) {
         this.context = context;
@@ -38,6 +38,9 @@ public abstract class AbstractController {
         this.organisations = (OrganisationService) this.context.getService(Organisation.class);
         this.projects = (ProjectService) this.context.getService(Project.class);
         this.microservices = (MicroserviceService) this.context.getService(Microservice.class);
+        this.invites = (InviteService) this.context.getService(Invite.class);
+        this.organisationPermissions = (OrganisationPermissionService) this.context.getService(OrganisationPermission.class);
+        this.projectPermissions = (ProjectPermissionService) this.context.getService(ProjectPermission.class);
     }
 
     protected String sendResponseAsJson(Response response, ReturnObj returnObj) {
@@ -55,6 +58,9 @@ public abstract class AbstractController {
         }
         public ReturnObj(String message, T t) {
             this(Status.OK.getCode(), message, t);
+        }
+        public ReturnObj(Status status, T t) {
+            this(status.getCode(), status.getMessage(), t);
         }
     }
 }

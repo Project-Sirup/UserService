@@ -2,11 +2,10 @@ package sirup.service.user.services;
 
 import sirup.service.log.rpc.client.LogClient;
 import sirup.service.user.api.Context;
-import sirup.service.user.interfaces.Service;
 
 import java.sql.Connection;
 
-public abstract class AbstractService<T> implements Service<T> {
+public abstract class AbstractService<T> {
     protected Context context;
     protected Connection connection;
     protected LogClient logger;

@@ -10,21 +10,20 @@ import java.sql.SQLException;
 
 public class UserService extends AbstractService<User> {
 
-    @Override
-    public boolean add(User user) throws CouldNotMakeResourceException {
+    public String add(User user) throws CouldNotMakeResourceException {
         try {
             String insertQuery = "INSERT INTO users (userID, userName, password) VALUES (?, ?, ?);";
             PreparedStatement insertStatement = this.connection.prepareStatement(insertQuery);
-            insertStatement.setString(1, user.userId().toString());
+            insertStatement.setString(1, user.userId());
             insertStatement.setString(2, user.userName());
             insertStatement.setString(3, user.password());
-            return insertStatement.execute();
+            insertStatement.execute();
+            return user.getId();
         } catch (SQLException e) {
             throw new CouldNotMakeResourceException(e.getMessage());
         }
     }
 
-    @Override
     public User get(String id) throws ResourceNotFoundException {
         try {
             String selectQuery = "SELECT * FROM users WHERE userID = ?;";
@@ -40,7 +39,6 @@ public class UserService extends AbstractService<User> {
         }
     }
 
-    @Override
     public User getBy(String columnName, String key) throws ResourceNotFoundException {
         try {
             String selectQuery = "SELECT * FROM users WHERE " + columnName + " = ?";
@@ -58,20 +56,20 @@ public class UserService extends AbstractService<User> {
         }
     }
 
-    @Override
     public boolean update(User user) throws ResourceNotFoundException {
         try {
-            String updateQuery = "UPDATE users SET userName = ? WHERE userId = ?";
+            String updateQuery = "UPDATE users SET userName = ?, password = ? WHERE userId = ?";
             PreparedStatement updateStatement = this.connection.prepareStatement(updateQuery);
             updateStatement.setString(1, user.userName());
-            updateStatement.setString(2, user.userId().toString());
-            return updateStatement.executeUpdate() > 0;
+            updateStatement.setString(2, user.password());
+            updateStatement.setString(3, user.userId());
+            updateStatement.executeUpdate();
+            return updateStatement.getUpdateCount() > 0;
         } catch (SQLException e) {
             throw new ResourceNotFoundException(e.getMessage());
         }
     }
 
-    @Override
     public boolean delete(String id) throws ResourceNotFoundException {
         try {
             String deleteQuery = "DELETE FROM users WHERE userID = ?";

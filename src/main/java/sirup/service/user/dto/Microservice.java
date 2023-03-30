@@ -7,12 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public record Microservice(UUID microserviceId, String microserviceName, UUID projectId, Object serviceFile, Set<User> users) implements DTO {
+public record Microservice(String microserviceId, String microserviceName, String projectId, Object serviceFile, Set<User> users) implements DTO {
 
-    public Microservice(String serviceName, UUID projectId) {
-        this(UUID.randomUUID(), serviceName, projectId, null, new HashSet<>());
+    public Microservice(String serviceName, String projectId) {
+        this(UUID.randomUUID().toString(), serviceName, projectId, null, new HashSet<>());
     }
-    public Microservice(UUID serviceId, String serviceName, UUID projectId) {
+    public Microservice(String serviceId, String serviceName, String projectId) {
         this(serviceId, serviceName, projectId, null, new HashSet<>());
     }
 
@@ -24,9 +24,9 @@ public record Microservice(UUID microserviceId, String microserviceName, UUID pr
     public static Microservice fromResultSet(ResultSet resultSet) throws CouldNotMakeResourceException {
         try {
             return new Microservice(
-                    UUID.fromString(resultSet.getString("microserviceID")),
+                    resultSet.getString("microserviceID"),
                     resultSet.getString("microserviceName"),
-                    UUID.fromString(resultSet.getString("projectId")));
+                    resultSet.getString("projectId"));
         } catch (NullPointerException | SQLException e) {
             throw new CouldNotMakeResourceException("Could not make microservice from ResultSet");
         }
@@ -41,7 +41,7 @@ public record Microservice(UUID microserviceId, String microserviceName, UUID pr
         if (obj == null || this.getClass() != obj.getClass()) {
             return false;
         }
-        Microservice s = (Microservice) obj;
-        return this.microserviceId().equals(s.microserviceId());
+        Microservice m = (Microservice) obj;
+        return this.getId().equals(m.getId());
     }
 }

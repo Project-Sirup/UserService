@@ -7,12 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public record Project(UUID projectId, String projectName, UUID organisationId, Set<Microservice> microservices, Set<User> users) implements DTO {
+public record Project(String projectId, String projectName, String organisationId, Set<Microservice> microservices, Set<User> users) implements DTO {
 
-    public Project(String projectName, UUID organisationId) {
-        this(UUID.randomUUID(),projectName,organisationId,new HashSet<>(),new HashSet<>());
+    public Project(String projectName, String organisationId) {
+        this(UUID.randomUUID().toString(), projectName, organisationId, new HashSet<>(), new HashSet<>());
     }
-    public Project(UUID projectId, String projectName, UUID organisationId) {
+    public Project(String projectId, String projectName, String organisationId) {
         this(projectId, projectName, organisationId, new HashSet<>(), new HashSet<>());
     }
 
@@ -24,9 +24,9 @@ public record Project(UUID projectId, String projectName, UUID organisationId, S
     public static Project fromResultSet(ResultSet resultSet) throws CouldNotMakeResourceException {
         try {
             return new Project(
-                    UUID.fromString(resultSet.getString("projectId")),
+                    resultSet.getString("projectId"),
                     resultSet.getString("projectName"),
-                    UUID.fromString(resultSet.getString("organisationId")));
+                    resultSet.getString("organisationId"));
         } catch (NullPointerException | SQLException e) {
             throw new CouldNotMakeResourceException("Could not make project from ResultSet");
         }
@@ -41,6 +41,6 @@ public record Project(UUID projectId, String projectName, UUID organisationId, S
             return false;
         }
         Project p = (Project) obj;
-        return this.projectId().equals(p.projectId());
+        return this.getId().equals(p.getId());
     }
 }
