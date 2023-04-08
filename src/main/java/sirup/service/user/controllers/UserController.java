@@ -5,11 +5,12 @@ import sirup.service.user.api.Context;
 import sirup.service.user.dto.User;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
+import sirup.service.user.util.ReturnObj;
 import sirup.service.user.util.Status;
 import spark.Request;
 import spark.Response;
 
-import static sirup.service.log.rpc.client.ColorUtil.*;
+import java.util.List;
 
 public class UserController extends AbstractController {
 
@@ -24,40 +25,47 @@ public class UserController extends AbstractController {
             if (!user.password().equals(loginRequest.password())) {
                 return this.sendResponseAsJson(response, new ReturnObj<>(Status.UNAUTHORIZED));
             }
-            String token = this.authClient.token(user.userId());
-            logger.info(id(user.userId()) + " -> " + action("login"));
+            String token = this.authClient.token(user.userId(), user.systemAccess().id);
             return this.sendResponseAsJson(response,
                     new ReturnObj<>("Login success",
                             new LoginResponse(token, user)));
-        } catch (CouldNotMakeResourceException | ResourceNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.UNAUTHORIZED, e.getMessage()));
         } catch (AuthServiceUnavailableException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.SERVICE_UNAVAILABLE, "AuthenticationService unavailable"));
         }
     }
+    private record LoginResponse(String token, User user){}
+    private record LoginRequest(String userName, String password) {}
 
     public Object find(Request request, Response response) {
         try {
             String userId = request.headers("UserId");
             User user = this.users.get(userId);
-            logger.info(id(userId) + " -> " + action("found"));
-            return user;
+            return this.sendResponseAsJson(response, new ReturnObj<>("User found", user));
         } catch (ResourceNotFoundException e) {
-            return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST));
+            return this.returnDoesNotExist(response);
         }
     }
 
-    private record LoginResponse(String token, User user){}
-    private record LoginRequest(String userName, String password) {}
+    public Object search(Request request, Response response) {
+        try {
+            String searchString = request.queryParams("userName");
+            List<User> users = this.users.search(searchString);
+            return this.sendResponseAsJson(response, new ReturnObj<>("User(s) found", users));
+        } catch (ResourceNotFoundException e) {
+            return this.returnDoesNotExist(response, e.getMessage());
+        }
+    }
 
     public Object store(Request request, Response response) {
         try {
             StoreRequest storeRequest = this.gson.fromJson(request.body(), StoreRequest.class);
+            System.out.println(storeRequest);
             User user = new User(storeRequest.userName(), storeRequest.password());
             this.users.add(user);
-            String token = this.authClient.token(user.userId());
-            logger.info(id(user.userId()) + " -> " + action("created"));
-            return this.sendResponseAsJson(response, new ReturnObj<>("User created", new StoreResponse(token, user.userId().toString())));
+            String token = this.authClient.token(user.userId(), user.systemAccess().id);
+            return this.sendResponseAsJson(response, new ReturnObj<>(Status.CREATED, "User created", new StoreResponse(token, user)));
         } catch (CouldNotMakeResourceException e) {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.ALREADY_EXISTS, e.getMessage()));
         } catch (AuthServiceUnavailableException e) {
@@ -65,34 +73,36 @@ public class UserController extends AbstractController {
         }
     }
     private record StoreRequest(String userName, String password) {}
-    private record StoreResponse(String token, String userId) {}
+    private record StoreResponse(String token, User user) {}
 
     public Object update(Request request, Response response) {
         try {
             String userId = request.headers("UserId");
             UpdateRequest updateRequest = this.gson.fromJson(request.body(), UpdateRequest.class);
-            if (!this.users.update(new User(userId, updateRequest.userName(), updateRequest.password()))) {
-                return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST));
+            User user = new User(userId, updateRequest.user().userName(), updateRequest.user().password());
+            if (!this.users.update(user)) {
+                return this.returnDoesNotExist(response);
             }
-            logger.info(id(userId) + " -> " + action("updated"));
-            return this.sendResponseAsJson(response, new ReturnObj<>(Status.OK));
+            return this.sendResponseAsJson(response, new ReturnObj<>( "User updated", user));
         } catch (ResourceNotFoundException e) {
-            return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST, e.getMessage()));
+            return this.returnDoesNotExist(response);
         }
     }
-    private record UpdateRequest(String userName, String password) {}
+    private record UpdateRequest(User user) {}
 
     public Object remove(Request request, Response response) {
         try {
-            RemoveRequest removeRequest = this.gson.fromJson(request.body(), RemoveRequest.class);
-            if (!this.users.delete(removeRequest.userId())) {
-                return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST));
+            String hUserId = request.headers("UserId");
+            String pUserId = request.params("userId");
+            if (!hUserId.equals(pUserId)) {
+                return this.sendResponseAsJson(response, new ReturnObj<>(Status.UNAUTHORIZED));
             }
-            logger.info(id(removeRequest.userId()) + " -> " + action("deleted"));
-            return this.sendResponseAsJson(response, new ReturnObj<>(Status.OK, "User deleted"));
+            if (!this.users.delete(pUserId)) {
+                return this.returnDoesNotExist(response);
+            }
+            return this.sendResponseAsJson(response, new ReturnObj<>("User deleted"));
         } catch (ResourceNotFoundException e) {
-            return this.sendResponseAsJson(response, new ReturnObj<>(Status.DOES_NOT_EXIST, e.getMessage()));
+            return this.returnDoesNotExist(response);
         }
     }
-    private record RemoveRequest(String userId) {}
 }

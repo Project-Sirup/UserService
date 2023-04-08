@@ -8,13 +8,13 @@ import java.sql.SQLException;
 
 public class ProjectPermissionService extends AbstractService<ProjectPermission> {
 
-    public String add(ProjectPermission projectPermission) {
+    public String add(ProjectPermission projectPermission) throws CouldNotMakeResourceException {
         try {
             String insertQuery = "INSERT INTO projectpermissions (userid, projectid, permissionid) VALUES (?, ?, ?)";
             PreparedStatement insertStatement = this.connection.prepareStatement(insertQuery);
             insertStatement.setString(1, projectPermission.userId());
             insertStatement.setString(2, projectPermission.projectId());
-            insertStatement.setInt(3, projectPermission.privilegeLevel().id);
+            insertStatement.setInt(3, projectPermission.permissionLevel().id);
             insertStatement.execute();
             return "";
         } catch (SQLException e) {

@@ -60,7 +60,7 @@
             ]
           }
         },
-        "/new": {
+        "": {
           "method": "POST",
           "request_body": {
 
@@ -68,10 +68,13 @@
           "response_body": {
 
           }
-        },
-        "": {
-          "method": "PUT",
-          "request_body": {
+        }
+      },
+      "/protected": {
+        "/user": {
+          "": {
+            "method": "PUT",
+            "request_body": {
 
           },
           "response_body": {
@@ -84,16 +87,17 @@
             "token": "bearer <token>"
           }
         }
-      },
-      "/organisation": {
+        },
+        "/organisation": {
 
-      },
-      "project": {
+        },
+        "/project": {
 
-      },
-      "service": {
+        },
+        "/service": {
 
+        }
       }
     }
-    }
+  }
 }

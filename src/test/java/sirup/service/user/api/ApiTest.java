@@ -2,6 +2,7 @@ package sirup.service.user.api;
 
 import org.junit.Test;
 import sirup.service.auth.rpc.client.AuthClient;
+import sirup.service.log.rpc.client.LogClient;
 import sirup.service.user.database.PostgreSQL;
 import sirup.service.user.dto.User;
 import sirup.service.user.services.UserService;
@@ -13,6 +14,7 @@ public class ApiTest {
     @Test
     public void builderTest() {
         AuthClient.init("localhost",2101);
+        LogClient.init("localhost",2102,"UserService");
         Api api = Api.builder()
                 .port(2103)
                 .context(

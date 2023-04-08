@@ -52,75 +52,91 @@ Microservices are stored with the following data:
 - microserviceFile (the entire design file)
 - projectId (relates to the project this microservice is created under)
 
-
 ## Endpoints
 
-All endpoints are under "/api/v1"
+All endpoints are under "/api/v1".
 
-Protected endpoints are under "/protected". Ex: "/api/v1/protected/user/:userId".
-All protected endpoints requires a token and userId in the header under "Token" and "UserId" respectively.
-The token and userId is validated by middleware, that calls the AuthService.
+All POST endpoints will return the full created resource.
+
+All PUT endpoints will return the full updated resource.
+
+Protected endpoints are under "/protected". Ex: "/api/v1/protected/user".
+All protected endpoints requires a token, userId and systemAccess in the header under "Token", "UserId" and "SystemAccess" respectively.
+The token, userId and systemAccess is validated by middleware, that calls the AuthService.
+
+
+
+Permissions | Actions
+--- | ---
+NO_ACCESS | None
+VIEW | Can get a resource
+EDIT | Can save file changes
+MANAGER | Can invite people
+ADMIN | Can update properties
+OWNER | Cannot lose permission
+
+Every permission can perform the actions of all the permissions above it
 
 ### /user
 
 Unprotected
 
-Method | Path | Body | Description
---- | --- | --- | ---
-POST | /login | userName, password | Logs in a user. Will generate a new token if login is successful.
-POST | | userName, password | Creates a new user in the system. Will generate and return a new token and userId if successful.
+Method | Path | Request Body | Response Body | Description
+--- | --- | --- | --- | ---
+POST | /login | userName, password | statusCode: 200, message: "Login success", data: {user: {userId, userNam, systemAccess}, token} | Logs in a user. Will generate a new token and return it and the user if login is successful.
+POST | | userName, password | statusCode: 201, message: "User created", data: {user: {userId, userNam, systemAccess}, token} | Creates a new user in the system. Will generate and return a new token and user if successful.
 
 Protected
 
-Method | Path | Body | Description
---- | --- | --- | ---
-GET | | | Finds a user with the given userId. Will return the public user information if successful.
-PUT | | username, password | Updates a user with the given userId.
-DELETE | | | Delete a user with the given userId.
-GET | /organisations | | Finds all the organisations that the given user has permissions to access.
-
+Method | Path | Request Body | Response Body | Description
+--- | --- | --- | --- | ---
+GET | /?userName | | statusCode: 200, message: "User(s) found", data: \[{userId, userName}] | Finds all users by searching for their userName. Will only return the public user information.
+PUT | | username, password | statusCode: 200, message: "User updated", data: {userId, userName} | Updates a user with the given userId.
+DELETE | | | statusCode: 200, message: "User deleted" | Delete a user with the given userId.
 
 ### /invite
 
 Protected
 
-Method | Path | Body | Description
---- | --- | --- | ---
-GET | | | Finds all the invitations for the user with the given userId.
-POST | | senderId, receiverId, organisationId | Creates a new invitation.
-POST | /response | senderId, receiverId, organisationId, accepted | Accepts/Declines an invitation.
-DELETE | | | Deletes the invitation with the given inviteId.
-
+Method | Path | Request Body | Response Body  | Description
+--- | --- | --- | --- | --- 
+GET | | | statusCode: 200, message: "Invitations found", data: \[{senderName, senderId, receiverName, receiverId, organisationName, organisationId}] | Finds all the invitations for the user with the given userId.
+POST | | senderId, receiverId, organisationId | statusCode: 201, message: "Invitation created", data: {senderName, senderId, receiverName, receiverId, organisationName, organisationId} | Creates a new invitation.
+POST | /response | senderId, receiverId, organisationId, accepted | statusCode: 200, message: "Invitation responded" | Accepts/Declines an invitation.
+DELETE | | senderId, receiverId, organisationId | statusCode: 200, message: "Invitation deleted" | Deletes the invitation with the given senderId, receiverId and organisationId.
 
 ### /organisation
 
 Protected
 
-Method | Path | Body | Description
---- | --- | --- | ---
-GET | /:organisationId | | Finds an organisation with the given organisationId.
-POST | | userId, organisationName | Creates a new organisation and adds the user as owner of the organisation.
-PUT | /:organisationId | organisationName | Updates the organisation with the given organisationId.
-DELETE | /:organisationId | | Deletes the organisation with the given organisationId
+Method | Path | Request Body | Response Body | Description
+--- | --- | --- | --- | ---
+GET | | | statusCode: 200, message: "Organisations found", data \[{organisationId, organisationName}] | Finds all the organisations for the user with the given userId from the header.
+GET | /:organisationId | | statusCode: 200, message: "Organisation found", data: {organisationId, organisationName} | Finds an organisation with the given organisationId.
+POST | | userId, organisationName | statusCode: 201, message: "Organisation created", data: {organisationId, organisationName} | Creates a new organisation and adds the user as owner of the organisation.
+PUT | /:organisationId | organisationName | statusCode: 200, message: "Organisation updated", data: {organisationId, organisationName} | Updates the organisation with the given organisationId.
+DELETE | /:organisationId | | statusCode: 200, message: "Organisation deleted" | Deletes the organisation with the given organisationId
 
 ### /project
 
 Protected
 
-Method | Path | Body | Description
---- | --- | --- | ---
-GET | /:projectId | | Finds an project with the given projectId.
-POST | | userId, organisationId, projectName | Creates a new project and adds the user as owner of the project.
-PUT | /:projectId | projectName | Updates the project with the given projectId.
-DELETE | /:projectId | | Deletes the project with the given projectId
+Method | Path | Request Body | Response Body | Description
+--- | --- | --- | --- | ---
+GET | /organisation/:organisationId | | statusCode: 200, message: "Projects found", data: \[{projectId, projectName}] | Finds all the projects for the organisation with the given organisationId.
+GET | /:projectId | | statusCode: 200, message: "Project found", data: {projectId, projectName} | Finds a project with the given projectId.
+POST | | userId, organisationId, projectName | statusCode: 201, message: "Project created", data: {projectId, projectName} | Creates a new project and adds the user as owner of the project.
+PUT | /:projectId | projectName | statusCode: 200, message: "Project updated", data: {projectId, projectName} | Updates the project with the given projectId.
+DELETE | /:projectId | | statusCode: 200, message: "Project deleted" | Deletes the project with the given projectId
 
 ### /microservice
 
 Protected
 
-Method | Path | Body | Description
---- | --- | --- | ---
-GET | /:microserviceId | | Finds an microservice with the given microserviceId.
-POST | | userId, projectId, microserviceName | Creates a new microservice and adds the user as owner of the project.
-PUT | /:microserviceId | projectName | Updates the microservice with the given microserviceId.
-DELETE | /:microserviceId | | Deletes the microservice with the given microserviceId
+Method | Path | Request Body | Response Body | Description
+--- | --- | --- | --- | ---
+GET | /project/:projectId | | statusCode: 200, message: "Microservices found", data: \[{microserviceId, microserviceName, microserviceFile, microserviceDownloadLink}] | Finds all microservices for the project with the given projectId.
+GET | /:microserviceId | | statusCode: 200, message: "Microservice found", data: {microserviceId, microserviceName, microserviceFile, microserviceDownloadLink} | Finds a microservice with the given microserviceId.
+POST | | userId, projectId, microserviceName | statusCode: 201, message: "Microservice created", data: {microserviceId, microserviceName, microserviceFile, microserviceDownload} | Creates a new microservice and adds the user as owner of the project.
+PUT | /:microserviceId | projectName | statusCode: 200, message: "Microservice updated", data: {microserviceId, microserviceName, microserviceFile, microserviceDownload}  | Updates the microservice with the given microserviceId.
+DELETE | /:microserviceId | | statusCode:200, message: "Microservice deleted" | Deletes the microservice with the given microserviceId

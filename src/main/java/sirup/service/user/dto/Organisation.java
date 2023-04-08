@@ -8,13 +8,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public record Organisation(String organisationId, String organisationName, Set<Project> projects, Set<User> users) implements DTO {
+public record Organisation(String organisationId, String organisationName, Map<User, PermissionLevel> users) implements DTO {
 
     public Organisation(String organisationName) {
-        this(UUID.randomUUID().toString(), organisationName, new HashSet<>(), new HashSet<>());
+        this(UUID.randomUUID().toString(), organisationName, new HashMap<>());
     }
     public Organisation(String organisationId, String organisationName) {
-        this(organisationId, organisationName, new HashSet<>(), new HashSet<>());
+        this(organisationId, organisationName, new HashMap<>());
     }
 
     @Override
@@ -24,10 +24,13 @@ public record Organisation(String organisationId, String organisationName, Set<P
 
     public static Organisation fromResultSet(ResultSet resultSet) throws CouldNotMakeResourceException {
         try {
-            return new Organisation(
-                    resultSet.getString("organisationID"),
-                    resultSet.getString("organisationName"));
-        } catch (NullPointerException | SQLException e) {
+            String organisationId = resultSet.getString("organisationId");
+            String organisationName = resultSet.getString("organisationName");
+            if (organisationId == null || organisationName == null) {
+                throw new CouldNotMakeResourceException("Could not make organisation from ResultSet");
+            }
+            return new Organisation(organisationId, organisationName);
+        } catch (SQLException e) {
            throw new CouldNotMakeResourceException("Could not make organisation from ResultSet");
         }
     }
@@ -35,6 +38,11 @@ public record Organisation(String organisationId, String organisationName, Set<P
     @Override
     public String toString() {
         return new Gson().toJson(this);
+    }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
     }
 
     @Override

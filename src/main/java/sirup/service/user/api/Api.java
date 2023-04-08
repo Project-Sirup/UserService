@@ -96,21 +96,24 @@ public class Api {
             return;
         }
         this.context.getServices().forEach(AbstractService::init);
-        after((request, response) -> {
+        before("*",(request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
-            response.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+            response.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
             response.header("Access-Control-Allow-Headers", "*");
             response.header("Access-Control-Allow-Credentials", "true");
             response.header("Access-Control-Allow-Credentials-Header", "*");
+            response.header("Accept", "*/*");
             //response.header("Content-Type", "text/event-stream");
         });
-        options("/*", ((request, response) -> {
+        options("*", ((request, response) -> {
             Optional.ofNullable(request.headers("Access-Control-Request-Headers"))
                     .ifPresent(header -> response.header("Access-Control-Allow-Headers", header));
-
             Optional.ofNullable(request.headers("Access-Control-Request-Method"))
                     .ifPresent(header -> response.header("Access-Control-Allow-Methods", header));
-            return "";
+            Optional.ofNullable(request.headers("Accept"))
+                    .ifPresent(header -> response.header("Accept", header));
+            response.status(200);
+            return "OK";
         }));
         final UserController uc = new UserController(this.context);
         final OrganisationController oc = new OrganisationController(this.context);
@@ -129,33 +132,37 @@ public class Api {
                 post("",                                    uc::store);
             });
             path("/protected", () -> {                      //Protected
-                before("/*",                     this.authMiddleWare); //Calls AuthService
+                before("/*",                                this.authMiddleWare); //Calls AuthService
                 path("/user", () -> {
-                    get("",                                 uc::find);
+                    get("/",                                uc::search);
                     put("",                                 uc::update);
                     delete("",                              uc::remove);
-                    get("/organisations",                   oc::findAll);
                 });
                 path("/organisation", () -> {
+                    get("",                                 oc::findAll);
                     get("/:organisationId",                 oc::find);
+                    get("/:organisationId/users",           oc::findUsers);
                     post("",                                oc::store);
                     put("/:organisationId",                 oc::update);
                     delete("/:organisationId",              oc::remove);
                 });
                 path("/project", () -> {
+                    get("/organisation/:organisationId",    pc::findAll);
                     get("/:projectId",                      pc::find);
                     post("",                                pc::store);
                     put("/:projectId",                      pc::update);
                     delete("/:projectId",                   pc::remove);
                 });
                 path("/microservice", () -> {
+                    get("/project/:projectId",              mc::findAll);
                     get("/:microserviceId",                 mc::find);
                     post("",                                mc::store);
                     put("/:microserviceId",                 mc::update);
                     delete("/:microserviceId",              mc::delete);
                 });
                 path("/invite", () -> {
-                    get("",                                 ic::find);
+                    get("/sent",                            ic::findSent);
+                    get("/received",                        ic::findReceived);
                     post("",                                ic::store);
                     post("/response",                       ic::response);
                     delete("",                              ic::remove);

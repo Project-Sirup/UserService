@@ -1,29 +1,27 @@
 package sirup.service.user.services;
 
-import sirup.service.user.dto.Microservice;
 import sirup.service.user.dto.Organisation;
-import sirup.service.user.dto.Project;
+import sirup.service.user.dto.User;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static sirup.service.log.rpc.client.ColorUtil.*;
 
 public class OrganisationService extends AbstractService<Organisation> {
 
-    public String add(Organisation organisation) {
+    public String add(Organisation organisation) throws CouldNotMakeResourceException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> " + id(organisation.getId()) + " -> " + action("created"));
             String insertQuery = "INSERT INTO organisations (organisationid, organisationname) VALUES (?, ?);";
             PreparedStatement insertStatement = this.connection.prepareStatement(insertQuery);
             insertStatement.setString(1, organisation.organisationId());
             insertStatement.setString(2, organisation.organisationName());
             insertStatement.execute();
+            logger.info(name("Organisation"), id(organisation.getId()), action("created"));
             return organisation.getId();
         } catch (SQLException e) {
             throw new CouldNotMakeResourceException(e.getMessage());
@@ -32,12 +30,12 @@ public class OrganisationService extends AbstractService<Organisation> {
 
     public Organisation get(String id) throws ResourceNotFoundException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> " + id(id) + " -> " + action("found"));
             String selectQuery = "SELECT * FROM organisations WHERE organisationId = ?;";
             PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
             selectStatement.setString(1, id);
             ResultSet resultSet = selectStatement.executeQuery();
             resultSet.next();
+            logger.info(name("Organisation"), id(id), action("found"));
             return Organisation.fromResultSet(resultSet);
         } catch (SQLException e) {
             throw new ResourceNotFoundException("Could not find organisation with id: " + id);
@@ -46,69 +44,51 @@ public class OrganisationService extends AbstractService<Organisation> {
         }
     }
 
-    public Organisation getBy(String columnName, String key) throws ResourceNotFoundException {
-        try {
-            logger.info(this.getClass().getSimpleName() + " -> " + columnName + " = " + key + " -> " + action("found"));
-            String selectQuery = "SELECT * FROM organisations WHERE " + columnName + " = ?";
-            PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
-            selectStatement.setString(1, key);
-            ResultSet resultSet = selectStatement.executeQuery();
-            resultSet.next();
-            return Organisation.fromResultSet(resultSet);
-        } catch (SQLException e) {
-            throw new ResourceNotFoundException("Could not find user: " + key);
-        } catch (CouldNotMakeResourceException e) {
-            throw new ResourceNotFoundException(e.getMessage());
-        }
-    }
-
-    public List<Organisation> getAll(String id) {
+    public List<Organisation> getAll(String id) throws ResourceNotFoundException {
         List<Organisation> organisations = new ArrayList<>();
         try {
             String selectQuery = "SELECT * FROM organisations o " +
-                    "INNER JOIN organisationpermissions op ON o.organisationid = op.organisationid " +
-                    "FULL JOIN projects p ON oP.organisationid = p.organisationid " +
-                    "FULL JOIN microservices m on p.projectid = m.projectid " +
-                    "INNER JOIN users u ON oP.userId = u.userId " +
+                    "FULL JOIN organisationpermissions op ON o.organisationid = op.organisationid " +
                     "WHERE op.userid = ?";
             PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
             selectStatement.setString(1, id);
             ResultSet resultSet = selectStatement.executeQuery();
             while (resultSet.next()) {
-                Organisation organisation = Organisation.fromResultSet(resultSet);
-                Project project = null;
                 try {
-                    project = Project.fromResultSet(resultSet);
-                } catch (CouldNotMakeResourceException e) {}
-                Microservice microservice = null;
-                try {
-                    microservice = Microservice.fromResultSet(resultSet);
-                } catch (CouldNotMakeResourceException e) {}
-                if (project != null) {
-                    System.out.println(project.projectName());
-                    if (microservice != null) {
-                        project.microservices().add(microservice);
-                    }
-                    organisation.projects().add(project);
+                    Organisation organisation = Organisation.fromResultSet(resultSet);
+                    organisations.add(organisation);
+                } catch (CouldNotMakeResourceException e) {
+                    System.err.println(e.getMessage());
                 }
-                organisations.add(organisation);
             }
         } catch (SQLException e) {
             throw new ResourceNotFoundException("Could not find organisations for user with id: " + id);
-        } catch (CouldNotMakeResourceException e) {
-            System.err.println(e.getMessage());
         }
+        logger.info(name("Organisations"), id(id), action("found all"));
         return organisations;
     }
 
-    public boolean update(Organisation organisation) throws ResourceNotFoundException {
+    public List<User> getUsers(String organisationId) throws ResourceNotFoundException {
+        throw new ResourceNotFoundException();
+
+    }
+
+    public boolean update(Organisation organisation, String userId) throws ResourceNotFoundException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> " + id(organisation.getId()) + " -> " + action("updated"));
-            String updateQuery = "UPDATE organisations SET organisationName = ? WHERE organisationId = ?";
+            String updateQuery = "UPDATE organisations o SET organisationName = ? " +
+                    "WHERE EXISTS(" +
+                    "SELECT * FROM organisationpermissions oP " +
+                    "INNER JOIN users u ON u.userid = oP.userId " +
+                    "WHERE oP.organisationid = o.organisationid " +
+                    "AND oP.permissionid >= 3 " +
+                    "AND u.userId = ?" +
+                    "AND o.organisationid = ?);";
             PreparedStatement updateStatement = this.connection.prepareStatement(updateQuery);
             updateStatement.setString(1, organisation.organisationName());
+            updateStatement.setString(2, userId);
             updateStatement.setString(2, organisation.organisationId());
             updateStatement.executeUpdate();
+            logger.info(name("Organisation"), id(organisation.getId()), action("updated"));
             return updateStatement.getUpdateCount() > 0;
         } catch (SQLException e) {
             throw new ResourceNotFoundException(e.getMessage());
@@ -117,11 +97,11 @@ public class OrganisationService extends AbstractService<Organisation> {
 
     public boolean delete(String id) throws ResourceNotFoundException {
         try {
-            logger.info(this.getClass().getSimpleName() + " -> " + id(id) + " -> " + action("deleted"));
             String deleteQuery = "DELETE FROM organisations WHERE organisationId = ?";
             PreparedStatement deleteStatement = this.connection.prepareStatement(deleteQuery);
             deleteStatement.setString(1, id);
             deleteStatement.executeUpdate();
+            logger.info(name("Organisation"), id(id), action("deleted"));
             return deleteStatement.getUpdateCount() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

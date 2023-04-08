@@ -18,20 +18,27 @@ public record Microservice(String microserviceId, String microserviceName, Strin
 
     @Override
     public String getId() {
-        return microserviceId().toString();
+        return microserviceId();
     }
 
     public static Microservice fromResultSet(ResultSet resultSet) throws CouldNotMakeResourceException {
         try {
-            return new Microservice(
-                    resultSet.getString("microserviceID"),
-                    resultSet.getString("microserviceName"),
-                    resultSet.getString("projectId"));
-        } catch (NullPointerException | SQLException e) {
+            String microserviceId = resultSet.getString("microserviceId");
+            String microserviceName = resultSet.getString("microserviceName");
+            String projectId = resultSet.getString("projectId");
+            if (microserviceId == null || microserviceName == null || projectId == null) {
+                throw new CouldNotMakeResourceException("Could not make microservice from ResultSet");
+            }
+            return new Microservice(microserviceId, microserviceName, projectId);
+        } catch (SQLException e) {
             throw new CouldNotMakeResourceException("Could not make microservice from ResultSet");
         }
     }
 
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
 
     @Override
     public boolean equals(Object obj) {
