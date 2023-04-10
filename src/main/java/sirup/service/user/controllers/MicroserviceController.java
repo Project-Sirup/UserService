@@ -61,16 +61,26 @@ public class MicroserviceController extends AbstractController {
         try {
             UpdateRequest updateRequest = this.gson.fromJson(request.body(), UpdateRequest.class);
             String microserviceId = request.params("microserviceId");
-            Microservice microservice = new Microservice(microserviceId, updateRequest.microserviceName());
+            Microservice microservice = new Microservice(microserviceId,
+                    updateRequest.microserviceName(),
+                    updateRequest.projectId(),
+                    updateRequest.microserviceFile());
             if (!this.microservices.update(microservice)) {
                 return this.returnDoesNotExist(response);
             }
             return this.sendResponseAsJson(response, new ReturnObj<>("Microservice updated", microservice));
         } catch (ResourceNotFoundException e) {
+            e.printStackTrace();
             return this.returnDoesNotExist(response, e.getMessage());
         }
     }
-    private record UpdateRequest(String microserviceName) {}
+    private record UpdateRequest(String microserviceName, String projectId, Object microserviceFile) {}
+
+    public Object save(Request request, Response response) {
+
+        return this.returnBadRequest(response);
+    }
+    private record SaveRequest(Object microserviceFile) {}
 
     public Object delete(Request request, Response response) {
         try {

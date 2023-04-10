@@ -13,6 +13,8 @@ import spark.Request;
 import spark.Response;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OrganisationController extends AbstractController {
 
@@ -51,13 +53,12 @@ public class OrganisationController extends AbstractController {
     public Object findUsers(Request request, Response response) {
         try {
             String userId = request.params("organisationId");
-            List<User> users = this.organisations.getUsers(userId);
+            Map<PermissionLevel, Set<User>> users = this.organisations.getUsers(userId);
             return this.sendResponseAsJson(response, new ReturnObj<>("Users found", users));
         } catch (ResourceNotFoundException e) {
             return this.returnDoesNotExist(response, e.getMessage());
         }
     }
-
 
     public Object findAll(Request request, Response response) {
         try {

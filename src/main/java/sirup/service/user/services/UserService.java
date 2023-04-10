@@ -9,6 +9,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static sirup.service.log.rpc.client.ColorUtil.*;
 
@@ -46,17 +48,19 @@ public class UserService extends AbstractService<User> {
         }
     }
 
-    public List<User> search(String userName) throws ResourceNotFoundException {
-        List<User> users = new ArrayList<>();
+    public Set<User> search(String userName, int amount) throws ResourceNotFoundException {
+        Set<User> users = new TreeSet<>();
         try {
             String selectQuery = "SELECT userName, userId FROM users WHERE starts_with(userName, ?)";
             PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
             selectStatement.setString(1, userName);
             ResultSet resultSet = selectStatement.executeQuery();
-            while(resultSet.next()) {
+            int i = 0;
+            while(resultSet.next() && i < amount) {
                 try {
                     User user = User.fromResultSetPublic(resultSet);
                     users.add(user);
+                    i++;
                 } catch (CouldNotMakeResourceException ignored) {}
             }
         } catch (SQLException e) {

@@ -1,5 +1,6 @@
 package sirup.service.user.services;
 
+import org.postgresql.util.PGobject;
 import sirup.service.user.dto.Microservice;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
@@ -74,10 +75,15 @@ public class MicroserviceService extends AbstractService<Microservice> {
     public boolean update(Microservice microservice) throws ResourceNotFoundException {
         try {
             //TODO: Check permissions
-            String updateQuery = "UPDATE microservices SET microservicename = ? WHERE microserviceid = ?";
+            System.out.println(microservice.microserviceFile());
+            String updateQuery = "UPDATE microservices SET microservicename = ?, microservicefile = ? WHERE microserviceid = ?";
             PreparedStatement updateStatement = this.connection.prepareStatement(updateQuery);
             updateStatement.setString(1, microservice.microserviceName());
-            updateStatement.setString(2, microservice.getId());
+            PGobject pGobject = new PGobject();
+            pGobject.setType("json");
+            pGobject.setValue(this.gson.toJson(microservice.microserviceFile().toString()));
+            updateStatement.setObject(2, pGobject);
+            updateStatement.setString(3, microservice.getId());
             updateStatement.executeUpdate();
             logger.info(name("Microservice"), id(microservice.getId()), action("updated"));
             return updateStatement.getUpdateCount() > 0;

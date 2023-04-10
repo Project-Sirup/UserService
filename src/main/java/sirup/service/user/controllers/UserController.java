@@ -11,6 +11,7 @@ import spark.Request;
 import spark.Response;
 
 import java.util.List;
+import java.util.Set;
 
 public class UserController extends AbstractController {
 
@@ -51,7 +52,8 @@ public class UserController extends AbstractController {
     public Object search(Request request, Response response) {
         try {
             String searchString = request.queryParams("userName");
-            List<User> users = this.users.search(searchString);
+            int searchAmount = Integer.parseInt(request.queryParams("amount"));
+            Set<User> users = this.users.search(searchString, searchAmount);
             return this.sendResponseAsJson(response, new ReturnObj<>("User(s) found", users));
         } catch (ResourceNotFoundException e) {
             return this.returnDoesNotExist(response, e.getMessage());

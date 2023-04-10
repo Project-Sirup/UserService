@@ -1,6 +1,7 @@
 package sirup.service.user.dto;
 
 import com.google.gson.Gson;
+import org.jetbrains.annotations.NotNull;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.interfaces.DTO;
 
@@ -8,7 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-public record User(String userId, String userName, String password, SystemAccess systemAccess) implements DTO {
+public record User(String userId, String userName, String password, SystemAccess systemAccess) implements DTO, Comparable<User> {
 
     private static final Gson GSON = new Gson();
 
@@ -78,5 +79,10 @@ public record User(String userId, String userName, String password, SystemAccess
         }
         User u = (User) obj;
         return this.getId().equals(u.getId());
+    }
+
+    @Override
+    public int compareTo(@NotNull User o) {
+        return this.userName().compareToIgnoreCase(o.userName());
     }
 }

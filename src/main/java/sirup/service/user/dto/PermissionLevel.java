@@ -4,13 +4,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 //TODO: Rename to permission
-public enum PermissionLevel {
-    NO_ACCESS(-1),
-    VIEW(0),
-    EDIT(1),
-    MANAGER(2),
+public enum PermissionLevel implements Comparable<PermissionLevel> {
+    OWNER(4),
     ADMIN(3),
-    OWNER(4);
+    MANAGER(2),
+    EDIT(1),
+    VIEW(0),
+    NO_ACCESS(-1);
     public final int id;
     PermissionLevel(final int id) {
         this.id = id;

@@ -1,6 +1,8 @@
 package sirup.service.user.services;
 
 import sirup.service.user.dto.Organisation;
+import sirup.service.user.dto.OrganisationPermission;
+import sirup.service.user.dto.PermissionLevel;
 import sirup.service.user.dto.User;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
@@ -68,8 +70,28 @@ public class OrganisationService extends AbstractService<Organisation> {
         return organisations;
     }
 
-    public List<User> getUsers(String organisationId) throws ResourceNotFoundException {
-        throw new ResourceNotFoundException();
+    public Map<PermissionLevel, Set<User>> getUsers(String organisationId) throws ResourceNotFoundException {
+        Map<PermissionLevel, Set<User>> users = new TreeMap<>();
+        try {
+            String selectQuery = "SELECT * FROM organisationpermissions op " +
+                    "INNER JOIN users u ON u.userid = op.userid " +
+                    "WHERE op.organisationid = ?";
+            PreparedStatement selectStatement = this.connection.prepareStatement(selectQuery);
+            selectStatement.setString(1, organisationId);
+            ResultSet resultSet = selectStatement.executeQuery();
+            while (resultSet.next()) {
+                try {
+                    User user = User.fromResultSet(resultSet);
+                    PermissionLevel permissionLevel = PermissionLevel.fromResultSet(resultSet);
+                    Set<User> set = users.getOrDefault(permissionLevel, new TreeSet<>());
+                    set.add(user);
+                    users.put(permissionLevel, set);
+                } catch (CouldNotMakeResourceException ignored) {}
+            }
+        } catch (SQLException e) {
+            throw new ResourceNotFoundException("Could not find users for organisation with id: " + organisationId);
+        }
+        return users;
 
     }
 
