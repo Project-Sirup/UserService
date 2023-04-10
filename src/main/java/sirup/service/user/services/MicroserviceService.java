@@ -81,11 +81,12 @@ public class MicroserviceService extends AbstractService<Microservice> {
             updateStatement.setString(1, microservice.microserviceName());
             PGobject pGobject = new PGobject();
             pGobject.setType("json");
-            pGobject.setValue(this.gson.toJson(microservice.microserviceFile().toString()));
+            pGobject.setValue(this.gson.toJson(microservice.microserviceFile()));
             updateStatement.setObject(2, pGobject);
             updateStatement.setString(3, microservice.getId());
             updateStatement.executeUpdate();
             logger.info(name("Microservice"), id(microservice.getId()), action("updated"));
+            System.out.println((microservice.microserviceFile()));
             return updateStatement.getUpdateCount() > 0;
         } catch (SQLException e) {
             throw new ResourceNotFoundException(e.getMessage());

@@ -60,6 +60,7 @@ public class MicroserviceController extends AbstractController {
     public Object update(Request request, Response response) {
         try {
             UpdateRequest updateRequest = this.gson.fromJson(request.body(), UpdateRequest.class);
+
             String microserviceId = request.params("microserviceId");
             Microservice microservice = new Microservice(microserviceId,
                     updateRequest.microserviceName(),
