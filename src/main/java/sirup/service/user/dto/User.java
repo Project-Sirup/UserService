@@ -19,6 +19,9 @@ public record User(String userId, String userName, String password, SystemAccess
     public User(String userId, String userName, String password) {
         this(userId, userName, password, SystemAccess.HIDDEN);
     }
+    public User(String userName, String password, int systemAccessId) {
+        this(UUID.randomUUID().toString(), userName, password, SystemAccess.fromId(systemAccessId));
+    }
     public User(String userId, String userName, SystemAccess systemAccess) {
         this(userId, userName, "", systemAccess);
     }

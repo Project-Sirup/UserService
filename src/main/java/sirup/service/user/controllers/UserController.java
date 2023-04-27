@@ -2,6 +2,7 @@ package sirup.service.user.controllers;
 
 import sirup.service.auth.rpc.client.AuthServiceUnavailableException;
 import sirup.service.user.api.Context;
+import sirup.service.user.dto.SystemAccess;
 import sirup.service.user.dto.User;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
@@ -64,7 +65,13 @@ public class UserController extends AbstractController {
         try {
             StoreRequest storeRequest = this.gson.fromJson(request.body(), StoreRequest.class);
             System.out.println(storeRequest);
-            User user = new User(storeRequest.userName(), storeRequest.password());
+            User user;
+            if (authClient.auth(request.headers("Token"),request.headers("UserId"),SystemAccess.ADMIN.id)) {
+                user = new User(storeRequest.userName(), storeRequest.password(), storeRequest.systemAccess());
+            }
+            else {
+                user = new User(storeRequest.userName(), storeRequest.password());
+            }
             this.users.add(user);
             String token = this.authClient.token(user.userId(), user.systemAccess().id);
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.CREATED, "User created", new StoreResponse(token, user)));
@@ -74,7 +81,7 @@ public class UserController extends AbstractController {
             return this.sendResponseAsJson(response, new ReturnObj<>(Status.SERVICE_UNAVAILABLE, "AuthenticationService is unavailable"));
         }
     }
-    private record StoreRequest(String userName, String password) {}
+    private record StoreRequest(String userName, String password, int systemAccess) {}
     private record StoreResponse(String token, User user) {}
 
     public Object update(Request request, Response response) {

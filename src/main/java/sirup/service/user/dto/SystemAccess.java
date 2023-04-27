@@ -6,8 +6,9 @@ import java.sql.SQLException;
 public enum SystemAccess {
     HIDDEN(-1),
     DEFAULT(0),
-    PRO(1),
-    ADMIN(2);
+    SERVICE(1),
+    PRO(2),
+    ADMIN(3);
     public final int id;
     SystemAccess(final int id) {
         this.id = id;
@@ -21,9 +22,12 @@ public enum SystemAccess {
                 return DEFAULT;
             }
             case 1 -> {
-                return PRO;
+                return SERVICE;
             }
             case 2 -> {
+                return PRO;
+            }
+            case 3 -> {
                 return ADMIN;
             }
         }
