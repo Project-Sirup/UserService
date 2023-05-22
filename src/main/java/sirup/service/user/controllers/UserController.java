@@ -66,7 +66,10 @@ public class UserController extends AbstractController {
             StoreRequest storeRequest = this.gson.fromJson(request.body(), StoreRequest.class);
             System.out.println(storeRequest);
             User user;
-            if (authClient.auth(request.headers("Token"),request.headers("UserId"),SystemAccess.ADMIN.id)) {
+            String reqToken = request.headers("Token");
+            String reqId = request.headers("UserId");
+            //For adding new admin users
+            if (reqToken != null && reqId != null && authClient.auth(reqToken, reqId,SystemAccess.ADMIN.id)) {
                 user = new User(storeRequest.userName(), storeRequest.password(), storeRequest.systemAccess());
             }
             else {

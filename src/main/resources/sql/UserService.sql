@@ -1,62 +1,75 @@
-DROP TABLE users, services, projects, organisations, servicePermissions, projectPermissions, organisationPermissions, permissions CASCADE ;
+CREATE DATABASE sirupUser;
+
 
 CREATE TABLE users (
-    userID VARCHAR(255) UNIQUE NOT NULL,
+    userId VARCHAR(255) UNIQUE NOT NULL,
     userName VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    PRIMARY KEY(userID)
+    systemAccess INTEGER NOT NULL,
+    PRIMARY KEY(userId)
+);
+
+INSERT INTO users (userId, userName, password, systemAccess) VALUES ('cbc10a9f-f96b-4bd0-b63c-afbdfc841cfe','admin','admin',3);
+
+CREATE TABLE organisations (
+    organisationId VARCHAR(255) NOT NULL,
+    organisationName VARCHAR(255) NOT NULL,
+    PRIMARY KEY(organisationId)
+    );
+
+CREATE TABLE projects (
+    projectId VARCHAR(255) NOT NULL,
+    projectName VARCHAR(255) NOT NULL,
+    organisationId VARCHAR(255) NOT NULL REFERENCES organisations(organisationId) ON DELETE CASCADE,
+    PRIMARY KEY(projectId)
 );
 
 CREATE TABLE microservices (
-    microserviceID VARCHAR(255) NOT NULL,
+    microserviceId VARCHAR(255) NOT NULL,
     microserviceName VARCHAR(255) NOT NULL,
     microserviceFile JSON,
-    projectID VARCHAR(255) NOT NULL,
-    PRIMARY KEY(microserviceID)
-);
-
-CREATE TABLE projects (
-    projectID VARCHAR(255) NOT NULL,
-    projectName VARCHAR(255) NOT NULL,
-    organisationID VARCHAR(255) NOT NULL,
-    PRIMARY KEY(projectID)
-);
-
-CREATE TABLE organisations (
-    organisationID VARCHAR(255) NOT NULL,
-    organisationName VARCHAR(255) NOT NULL,
-    PRIMARY KEY(organisationID)
+    projectId VARCHAR(255) NOT NULL REFERENCES projects(projectId) ON DELETE CASCADE,
+    PRIMARY KEY(microserviceId)
 );
 
 CREATE TABLE permissions (
-    permissionID INTEGER NOT NULL,
+    permissionId INTEGER NOT NULL,
     permissionName VARCHAR(255) NOT NULL,
-    PRIMARY KEY(permissionID)
+    PRIMARY KEY(permissionId)
 );
 
 CREATE TABLE organisationPermissions (
-    userID VARCHAR(255) NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
-    organisationID VARCHAR(255) NOT NULL REFERENCES organisations(organisationID) ON DELETE CASCADE,
-    permissionID INTEGER NOT NULL REFERENCES permissions(permissionID),
-    PRIMARY KEY(userID, organisationID, permissionID)
+    userId VARCHAR(255) NOT NULL REFERENCES users(userId) ON DELETE CASCADE,
+    organisationId VARCHAR(255) NOT NULL REFERENCES organisations(organisationId) ON DELETE CASCADE,
+    permissionId INTEGER NOT NULL REFERENCES permissions(permissionId),
+    PRIMARY KEY(userId, organisationId, permissionId)
 );
 
 CREATE TABLE projectPermissions (
-    userID VARCHAR(255) NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
-    projectID VARCHAR(255) NOT NULL REFERENCES projects(projectID) ON DELETE CASCADE,
-    permissionID INTEGER NOT NULL REFERENCES permissions(permissionID),
-    PRIMARY KEY(userID, projectID, permissionID)
+    userId VARCHAR(255) NOT NULL REFERENCES users(userId) ON DELETE CASCADE,
+    projectId VARCHAR(255) NOT NULL REFERENCES projects(projectId) ON DELETE CASCADE,
+    permissionId INTEGER NOT NULL REFERENCES permissions(permissionId),
+    PRIMARY KEY(userId, projectId, permissionId)
 );
 
-CREATE TABLE microservicesPermissions (
-    userID VARCHAR(255) NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
-    serviceID VARCHAR(255) NOT NULL REFERENCES microservices(microserviceID) ON DELETE CASCADE,
-    permissionID INTEGER NOT NULL REFERENCES permissions(permissionID),
-    PRIMARY KEY(userID, serviceID, permissionID)
+CREATE TABLE microservicePermissions (
+    userId VARCHAR(255) NOT NULL REFERENCES users(userId) ON DELETE CASCADE,
+    microserviceId VARCHAR(255) NOT NULL REFERENCES microservices(microserviceId) ON DELETE CASCADE,
+    permissionId INTEGER NOT NULL REFERENCES permissions(permissionId),
+    PRIMARY KEY(userId, microserviceId, permissionId)
 );
 
+INSERT INTO permissions (permissionId, permissionName) VALUES
+    (-1,'NO_ACCESS'),
+    (0,'VIEW'),
+    (1,'EDIT'),
+    (2,'MANAGER'),
+    (3,'ADMIN'),
+    (4,'OWNER');
 
-INSERT INTO permissions (permissionID, permissionName) VALUES
-    (0,'ADMIN'),
-    (1,'MANAGER'),
-    (2,'DEFAULT');
+CREATE TABLE organisationInvites (
+    senderId VARCHAR(255) NOT NULL REFERENCES users(userId) ON DELETE CASCADE,
+    receiverId VARCHAR(255) NOT NULL REFERENCES users(userId) ON DELETE CASCADE,
+    organisationId VARCHAR(255) NOT NULL REFERENCES organisations(organisationId) ON DELETE CASCADE,
+    PRIMARY KEY (senderId, receiverId, organisationId)
+);

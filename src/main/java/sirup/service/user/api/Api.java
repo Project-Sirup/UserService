@@ -8,8 +8,7 @@ import sirup.service.user.services.AbstractService;
 import sirup.service.user.util.Env;
 import spark.Filter;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
@@ -33,19 +32,19 @@ public class Api {
     }
 
     private String getDocFromFile() {
-        try {
-            URL url = this.getClass().getClassLoader().getResource("json/doc.json");
-            File docFile = new File(url.toURI());
-            try (Scanner input = new Scanner(docFile)) {
-                StringBuilder stringBuilder = new StringBuilder();
-                while (input.hasNextLine()) {
-                    stringBuilder.append(input.nextLine());
-                }
-                return stringBuilder.toString();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+        try (InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("json/doc.json")) {
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String line = bufferedReader.readLine();
+            StringBuilder stringBuilder = new StringBuilder();
+            while (line != null) {
+                stringBuilder.append(line);
+                line = bufferedReader.readLine();
             }
-        } catch (URISyntaxException e) {
+            inputStreamReader.close();
+            bufferedReader.close();
+            return stringBuilder.toString();
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return "{}";

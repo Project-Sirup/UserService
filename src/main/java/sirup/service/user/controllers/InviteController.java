@@ -83,23 +83,26 @@ public class InviteController extends AbstractController {
     private record ResponseRequest(Invite invite, boolean accepted) {};
 
     private void notifySender(Invite invite) throws URISyntaxException, IOException, InterruptedException {
+        InviteNotificationObject ino = new InviteNotificationObject("invite", invite.senderId(), invite);
         HttpRequest request = HttpRequest.newBuilder()
                 //TODO: add to .env
-                .uri(new URI("http://127.0.0.1:2104/api/v1/trigger" + invite.senderId()))
+                .uri(new URI("http://127.0.0.1:2104/api/v1/trigger"))
                 .setHeader("Content-Type", "Application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(this.gson.toJson(invite)))
+                .POST(HttpRequest.BodyPublishers.ofString(this.gson.toJson(ino)))
                 .build();
         HttpClient client = HttpClient.newBuilder().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println(response.body());
     }
 
+    private record InviteNotificationObject(String eventType, String id, Object data) {}
     private void notifyReceiver(Invite invite) throws URISyntaxException, IOException, InterruptedException {
-        System.out.println("Notifying " + invite.receiverId());
+        //System.out.println("Notifying " + invite.receiverId());
+        InviteNotificationObject ino = new InviteNotificationObject("invite", invite.receiverId(), invite);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI("http://127.0.0.1:2104/api/v1/trigger/" + invite.receiverId()))
+                .uri(new URI("http://127.0.0.1:2104/api/v1/trigger"))
                 .setHeader("Content-Type","Application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(this.gson.toJson(invite)))
+                .POST(HttpRequest.BodyPublishers.ofString(this.gson.toJson(ino)))
                 .build();
         HttpClient client = HttpClient.newBuilder().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
