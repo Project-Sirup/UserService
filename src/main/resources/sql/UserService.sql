@@ -9,8 +9,6 @@ CREATE TABLE users (
     PRIMARY KEY(userId)
 );
 
-INSERT INTO users (userId, userName, password, systemAccess) VALUES ('cbc10a9f-f96b-4bd0-b63c-afbdfc841cfe','admin','admin',3);
-
 CREATE TABLE organisations (
     organisationId VARCHAR(255) NOT NULL,
     organisationName VARCHAR(255) NOT NULL,

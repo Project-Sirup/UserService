@@ -12,6 +12,8 @@ public class Env {
     public static final int AUTH_PORT;
     public static final String LOG_URL;
     public static final int LOG_PORT;
+    public static final String DEFAULT_ADMIN_USERNAME;
+    public static final String DEFAULT_ADMIN_PASS;
     static {
         Dotenv dotenv = Dotenv.load();
         POSTGRES_CONNECTION_STRING = dotenv.get("POSTGRES_CONNECTION_STRING");
@@ -23,5 +25,7 @@ public class Env {
         AUTH_PORT = Integer.parseInt(dotenv.get("AUTH_PORT"));
         LOG_URL = dotenv.get("LOG_URL");
         LOG_PORT = Integer.parseInt(dotenv.get("LOG_PORT"));
+        DEFAULT_ADMIN_USERNAME = dotenv.get("DEFAULT_ADMIN_USERNAME");
+        DEFAULT_ADMIN_PASS = dotenv.get("DEFAULT_ADMIN_PASS");
     }
 }

@@ -13,7 +13,7 @@ public record User(String userId, String userName, String password, SystemAccess
 
     private static final Gson GSON = new Gson();
 
-    public User (String userName, String password) {
+    public User(String userName, String password) {
         this(UUID.randomUUID().toString(), userName, password, SystemAccess.HIDDEN);
     }
     public User(String userId, String userName, String password) {
