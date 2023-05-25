@@ -1,7 +1,6 @@
 package sirup.service.user.dto;
 
 import com.google.gson.Gson;
-import org.jetbrains.annotations.NotNull;
 import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.interfaces.DTO;
 
@@ -85,7 +84,7 @@ public record User(String userId, String userName, String password, SystemAccess
     }
 
     @Override
-    public int compareTo(@NotNull User o) {
+    public int compareTo(User o) {
         return this.userName().compareToIgnoreCase(o.userName());
     }
 }

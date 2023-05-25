@@ -23,7 +23,7 @@ public class Api {
     private final Filter authMiddleWare;
     private final String doc;
 
-    private final String baseUrl = Env.API_BASE_URL;
+    private final String baseUrl = "/api/v1";
 
     private Api() {
         this.logger = LogClient.getInstance();

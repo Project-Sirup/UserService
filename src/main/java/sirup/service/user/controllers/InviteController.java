@@ -11,6 +11,7 @@ import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
 import sirup.service.user.util.ReturnObj;
 import sirup.service.user.util.Status;
+import sirup.service.user.util.Env;
 import spark.Request;
 import spark.Response;
 
@@ -85,8 +86,7 @@ public class InviteController extends AbstractController {
     private void notifySender(Invite invite) throws URISyntaxException, IOException, InterruptedException {
         InviteNotificationObject ino = new InviteNotificationObject("invite", invite.senderId(), invite);
         HttpRequest request = HttpRequest.newBuilder()
-                //TODO: add to .env
-                .uri(new URI("http://127.0.0.1:2104/api/v1/trigger"))
+                .uri(new URI(Env.NOTI_ADDRESS + ":" + Env.NOTI_PORT + "/api/v1/trigger"))
                 .setHeader("Content-Type", "Application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(this.gson.toJson(ino)))
                 .build();

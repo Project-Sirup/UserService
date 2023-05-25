@@ -11,10 +11,10 @@ import sirup.service.user.util.Env;
 
 public class Main {
     public static void main(String[] args) {
-        AuthClient.init(Env.AUTH_URL, Env.AUTH_PORT);
-        LogClient.init(Env.LOG_URL, Env.LOG_PORT, "UserService");
+        AuthClient.init(Env.AUTH_ADDRESS, Env.AUTH_PORT);
+        LogClient.init(Env.LOG_ADDRESS, Env.LOG_PORT, "UserService");
         Api.builder()
-                .port(Env.API_PORT)
+                .port(Env.USER_PORT)
                 .context(
                         Context.builder()
                                 .database(new PostgreSQL())

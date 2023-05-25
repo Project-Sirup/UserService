@@ -7,9 +7,9 @@ import java.sql.*;
 
 public class PostgreSQL implements IDatabase {
 
-    private final String connectionString = Env.POSTGRES_CONNECTION_STRING;
-    private final String user = Env.POSTGRES_USER;
-    private final String password = Env.POSTGRES_PASSWORD;
+    private final String connectionString = Env.USER_DB_ADDRESS + ":" + Env.USER_DB_PORT + "/" + Env.USER_DB_NAME;
+    private final String user = Env.USER_DB_USERNAME;
+    private final String password = Env.USER_DB_PASSWORD;
     private final LogClient logger = LogClient.getInstance();
 
     private Connection connection;
