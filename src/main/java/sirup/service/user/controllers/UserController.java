@@ -1,5 +1,6 @@
 package sirup.service.user.controllers;
 
+import org.mindrot.jbcrypt.BCrypt;
 import sirup.service.auth.rpc.client.AuthServiceUnavailableException;
 import sirup.service.user.api.Context;
 import sirup.service.user.dto.SystemAccess;
@@ -8,6 +9,7 @@ import sirup.service.user.exceptions.CouldNotMakeResourceException;
 import sirup.service.user.exceptions.ResourceNotFoundException;
 import sirup.service.user.util.ReturnObj;
 import sirup.service.user.util.Status;
+import sirup.service.user.util.Env;
 import spark.Request;
 import spark.Response;
 
@@ -18,13 +20,29 @@ public class UserController extends AbstractController {
 
     public UserController(final Context context) {
         super(context);
+        addDefaultAdminIfNoExists();
+    }
+
+    private void addDefaultAdminIfNoExists() {
+        try {
+            if (this.users.getAll().isEmpty()) {
+                this.users.add(new User(
+                        Env.DEFAULT_ADMIN_USERNAME,
+                        hashPassword(Env.DEFAULT_ADMIN_PASSWORD),
+                        SystemAccess.ADMIN.id));
+            }
+        } catch (ResourceNotFoundException | CouldNotMakeResourceException e) {
+            e.printStackTrace();
+        }
     }
 
     public Object login(Request request, Response response) {
         try {
             LoginRequest loginRequest = this.gson.fromJson(request.body(), LoginRequest.class);
             User user = this.users.getBy("userName", loginRequest.userName());
-            if (!user.password().equals(loginRequest.password())) {
+            System.out.println(user.password());
+            System.out.println(loginRequest.password());
+            if (!BCrypt.checkpw(loginRequest.password(), user.password())) {
                 return this.sendResponseAsJson(response, new ReturnObj<>(Status.UNAUTHORIZED));
             }
             String token = this.authClient.token(user.userId(), user.systemAccess().id);
@@ -61,6 +79,12 @@ public class UserController extends AbstractController {
         }
     }
 
+    private String hashPassword(String plainPass) {
+        String salt = BCrypt.gensalt(10);
+        String hashedPassword = BCrypt.hashpw(plainPass, salt);
+        return hashedPassword;
+    }
+
     public Object store(Request request, Response response) {
         try {
             StoreRequest storeRequest = this.gson.fromJson(request.body(), StoreRequest.class);
@@ -68,12 +92,15 @@ public class UserController extends AbstractController {
             User user;
             String reqToken = request.headers("Token");
             String reqId = request.headers("UserId");
+            String hashPassword = hashPassword(storeRequest.password());
             //For adding new admin users
             if (reqToken != null && reqId != null && authClient.auth(reqToken, reqId,SystemAccess.ADMIN.id)) {
                 user = new User(storeRequest.userName(), storeRequest.password(), storeRequest.systemAccess());
+                user = new User(storeRequest.userName(), hashPassword, storeRequest.systemAccess());
             }
             else {
                 user = new User(storeRequest.userName(), storeRequest.password());
+                user = new User(storeRequest.userName(), hashPassword);
             }
             this.users.add(user);
             String token = this.authClient.token(user.userId(), user.systemAccess().id);
@@ -91,7 +118,8 @@ public class UserController extends AbstractController {
         try {
             String userId = request.headers("UserId");
             UpdateRequest updateRequest = this.gson.fromJson(request.body(), UpdateRequest.class);
-            User user = new User(userId, updateRequest.user().userName(), updateRequest.user().password());
+            String hashPassword = hashPassword(updateRequest.user().password());
+            User user = new User(userId, updateRequest.user().userName(), hashPassword);
             if (!this.users.update(user)) {
                 return this.returnDoesNotExist(response);
             }

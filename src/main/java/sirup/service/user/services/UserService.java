@@ -7,6 +7,7 @@ import sirup.service.user.exceptions.ResourceNotFoundException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,25 @@ public class UserService extends AbstractService<User> {
             return user.getId();
         } catch (SQLException e) {
             throw new CouldNotMakeResourceException(e.getMessage());
+        }
+    }
+
+    public List<User> getAll() throws ResourceNotFoundException {
+        try {
+            String selectQuery = "SELECT * FROM users;";
+            Statement selectStatement = this.connection.createStatement();
+            ResultSet resultSet = selectStatement.executeQuery(selectQuery);
+            List<User> users = new ArrayList<>();
+            while(resultSet != null && resultSet.next()) {
+                try {
+                    User user = User.fromResultSetWithPass(resultSet);
+                    users.add(user);
+                } catch (CouldNotMakeResourceException ignored) {}
+            }
+            logger.info(name("Users"), action("found"));
+            return users;
+        } catch (SQLException e) {
+            throw new ResourceNotFoundException("Could not find any users");
         }
     }
 

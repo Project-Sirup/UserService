@@ -13,6 +13,8 @@ public class Env {
     public static final int LOG_PORT;
     public static final String NOTI_ADDRESS;
     public static final int NOTI_PORT;
+    public static final String DEFAULT_ADMIN_USERNAME;
+    public static final String DEFAULT_ADMIN_PASSWORD;
     static {
         USER_DB_ADDRESS = System.getenv("USER_DB_ADDRESS");
         USER_DB_PORT = Integer.parseInt(System.getenv("USER_DB_PORT"));
@@ -26,5 +28,7 @@ public class Env {
         LOG_PORT = Integer.parseInt(System.getenv("LOG_PORT"));
         NOTI_ADDRESS = System.getenv("NOTI_ADDRESS");
         NOTI_PORT = Integer.parseInt(System.getenv("NOTI_PORT"));
+        DEFAULT_ADMIN_USERNAME = System.getenv("DEFAULT_ADMIN_USERNAME");
+        DEFAULT_ADMIN_PASSWORD = System.getenv("DEFAULT_ADMIN_PASSWORD");
     }
 }
